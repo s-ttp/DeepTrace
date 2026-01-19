@@ -1,0 +1,66 @@
+{
+  "network_overview": "The capture shows healthy 5G N4 (PFCP), 4G Diameter, 3G GTP-C and AAA RADIUS control-plane traffic between SMF/UPF, MME/HSS and SGSN/CGF. All observed transactions complete successfully; no user-plane or IMS traffic is present at this observation point.",
+  "classification": "ESTABLISHED",
+  "health_score": 95,
+  "health_status": "healthy",
+  "pattern_matches": [],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "PFCP Session-Establishment requests (Msg-50) always receive accepted answers (Msg-51) with cause=1",
+      "severity": "info",
+      "evidence": "pkt_8\u2192pkt_9, pkt_20\u2192pkt_21, seq 814444 & 816425"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "PFCP Session-Modification requests (Msg-52) are always answered successfully (Msg-53) with cause=1",
+      "severity": "info",
+      "evidence": "23 attempts, 23 successes (e.g. pkt_12\u2192pkt_13, seq 814940)"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "One Diameter Cmd-272 exchange returns 3002 'Unable-to-Deliver' but is immediately retried and succeeds (2001)",
+      "severity": "warning",
+      "evidence": "pkt_2\u2192pkt_3 (3002) followed by pkt_4\u2192pkt_5 (2001) within 22 ms"
+    }
+  ],
+  "root_causes": [],
+  "inconclusive_aspects": [
+    {
+      "aspect": "User-plane connectivity",
+      "reason": "GTP-U or 5G-PDU session data not captured at this UPF control interface",
+      "additional_capture_needed": "Mirror the N3/N9 user-plane ports to verify PDU session throughput"
+    },
+    {
+      "aspect": "Voice/IMS call quality",
+      "reason": "No SIP, RTP, or NGAP observed",
+      "additional_capture_needed": "Capture on IMS-core or N2 interface for call signalling and media"
+    },
+    {
+      "aspect": "Subscriber authentication result",
+      "reason": "Only Diameter result codes visible; no NAS/ESM messages",
+      "additional_capture_needed": "Trace S1-MME or N1 interface to confirm UE attach accept"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Monitor the single Diameter 3002 occurrence for recurrence; if repetitive, investigate peer 10.47.54.22 reachability",
+      "rationale": "One transient timeout is acceptable, but repetition would indicate transport or peer overload",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Enable GTP-U/PDU counters on UPF to correlate with PFCP session-create/modify rates",
+      "rationale": "Ensures successful control-plane transactions actually carry user traffic",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "All PFCP, Diameter, GTP-C and RADIUS exchanges complete successfully; no retransmissions or reject codes observed after initial 3002 retry.",
+    "user_plane_health": "Not observable at this capture point (N4 control interface only).",
+    "voice_quality": "Not observable (no RTP or SIP present).",
+    "cross_plane_correlation": "PFCP session-create/modify success implies SMF-UPF sync is healthy; Diameter success indicates HSS/PCRF reachability."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant SMF\n    participant UPF\n    participant MME\n    participant HSS\n    Note over SMF,UPF: 5G N4 PFCP\n    SMF->>UPF: PFCP Session Establish (50) seq=814444\n    UPF->>SMF: PFCP Response (51) cause=1\n    SMF->>UPF: PFCP Modify (52) seq=814940\n    UPF->>SMF: PFCP Response (53) cause=1\n    Note over MME,HSS: 4G S6a Diameter\n    MME->>HSS: Cmd-272 session=mscp01...\n    HSS->>MME: 3002 Unable-to-Deliver\n    MME->>HSS: Cmd-272 (retry)\n    HSS->>MME: 2001 Success"
+}

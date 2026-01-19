@@ -1,0 +1,60 @@
+{
+  "network_overview": "A single Diameter/TCP flow (4 packets, 3 s) between two EPC nodes carrying command 8388636; the request is answered with Result-Code 3002, indicating a permanent failure. No voice, media, or additional signaling is captured.",
+  "classification": "REJECTED",
+  "health_score": 0,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Exactly one Diameter request/response pair; 324-byte average packet size is typical for AVP-heavy EPC messages.",
+      "severity": "info",
+      "evidence": "Cmd-8388636 request (frame 1) and answer with Result-Code 3002 (frame 3)"
+    },
+    {
+      "category": "Signaling Failure",
+      "finding": "100 % failure rate for Cmd-8388636; every attempt received Result-Code 3002.",
+      "severity": "critical",
+      "evidence": "Procedure KPI: attempts=2, success_rate=0.0, top_cause='3002'=1"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Diameter Result-Code 3002",
+      "description": "The responder (10.47.73.86) returned permanent failure 3002 for command 8388636, causing the procedure to abort.",
+      "impact": "Prevents successful completion of the Diameter procedure (likely S6a/S13/Cx depending on deployed command code).",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "Message: Cmd-8388636 answer",
+        "Result-Code: 3002",
+        "Timestamp: 1722044079.351457"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Which Diameter application/command 8388636 maps to",
+      "reason": "Command name and Application-ID not provided in capture metadata",
+      "additional_capture_needed": "Diameter decode with full AVP list to reveal Command Code and Application-ID"
+    },
+    {
+      "aspect": "User-plane or voice service impact",
+      "reason": "No GTP-U, RTP, or SIP messages observed",
+      "additional_capture_needed": "Parallel user-plane capture on S1-U or SGi"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate the meaning of Result-Code 3002 for command 8388636 in the relevant 3GPP specification (S6a/S13/Cx/etc.) and check responder logs for the exact failure reason.",
+      "rationale": "The capture proves a permanent Diameter failure; vendor documentation or logs will translate 3002 into actionable detail.",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Single Diameter transaction failed with permanent error 3002; no retry or alternate procedure observed.",
+    "user_plane_health": "Not observable at this capture point.",
+    "voice_quality": "Media plane not captured at this observation point.",
+    "cross_plane_correlation": "No user-plane traffic present to correlate with the failed Diameter exchange."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant A as 10.193.1.134\n    participant B as 10.47.73.86\n    A->>B: Diameter Cmd-8388636 Request\n    B->>A: Diameter Cmd-8388636 Answer (Result-Code 3002)"
+}

@@ -1,0 +1,92 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1722044076.306955,
+      "src_ip": "10.193.1.134",
+      "dst_ip": "10.47.73.86",
+      "src_port": 3868,
+      "dst_port": 42049,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 356,
+      "info": ""
+    },
+    {
+      "timestamp": 1722044076.306957,
+      "src_ip": "10.193.1.134",
+      "dst_ip": "10.47.73.86",
+      "src_port": 3868,
+      "dst_port": 42049,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 356,
+      "info": ""
+    },
+    {
+      "timestamp": 1722044079.351457,
+      "src_ip": "10.47.73.86",
+      "dst_ip": "10.193.1.134",
+      "src_port": 42049,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 292,
+      "info": ""
+    },
+    {
+      "timestamp": 1722044079.351457,
+      "src_ip": "10.47.73.86",
+      "dst_ip": "10.193.1.134",
+      "src_port": 42049,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 292,
+      "info": ""
+    }
+  ],
+  "deep_transactions": [
+    {
+      "tx_id": "pkt_1",
+      "timestamp": 1722044076.306955,
+      "frame_number": 1,
+      "protocol": "Diameter",
+      "message_type": "Cmd-8388636",
+      "cause": null,
+      "session_ids": {
+        "session_id": "mtbhwpcrf01.epc.mnc001.mcc427.3gppnetwork.org;2668221976;66055;629"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.193.1.134",
+      "_dst": "10.47.73.86",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_3",
+      "timestamp": 1722044079.351457,
+      "frame_number": 3,
+      "protocol": "Diameter",
+      "message_type": "Cmd-8388636",
+      "cause": "3002",
+      "session_ids": {
+        "session_id": "mtbhwpcrf01.epc.mnc001.mcc427.3gppnetwork.org;2668221976;66055;629"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.73.86",
+      "_dst": "10.193.1.134",
+      "_teid": null,
+      "_seid": null
+    }
+  ],
+  "voice_analysis": {
+    "trace_type": "EMPTY_OR_UNKNOWN",
+    "calls": [],
+    "registrations": [],
+    "findings": []
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "total_flows": 74,
+  "total_packets": 379,
+  "total_bytes": 404594,
+  "protocols": [
+    "SIP"
+  ],
+  "duration": 2184.6015338897705,
+  "start_time": 1726067992.944127,
+  "end_time": 1726070177.545661
+}

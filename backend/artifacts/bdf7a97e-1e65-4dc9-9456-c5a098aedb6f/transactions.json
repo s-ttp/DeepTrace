@@ -1,0 +1,115 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1606196852.474177,
+      "src_ip": "10.235.69.1",
+      "dst_ip": "10.235.68.66",
+      "src_port": 6606,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "SCTP",
+      "length": 1510,
+      "info": ""
+    },
+    {
+      "timestamp": 1606196852.474183,
+      "src_ip": "10.235.69.1",
+      "dst_ip": "10.235.68.66",
+      "src_port": 6606,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "SCTP",
+      "length": 226,
+      "info": ""
+    },
+    {
+      "timestamp": 1606196852.486942,
+      "src_ip": "10.235.68.66",
+      "dst_ip": "10.235.69.1",
+      "src_port": 5060,
+      "dst_port": 6606,
+      "protocol": "SIP",
+      "transport": "SCTP",
+      "length": 414,
+      "info": ""
+    },
+    {
+      "timestamp": 1606196852.572969,
+      "src_ip": "10.235.68.75",
+      "dst_ip": "10.235.69.1",
+      "src_port": 6405,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "SCTP",
+      "length": 418,
+      "info": ""
+    },
+    {
+      "timestamp": 1606196852.60304,
+      "src_ip": "10.235.68.66",
+      "dst_ip": "10.235.69.1",
+      "src_port": 5060,
+      "dst_port": 6606,
+      "protocol": "SIP",
+      "transport": "SCTP",
+      "length": 1338,
+      "info": ""
+    }
+  ],
+  "deep_transactions": [
+    {
+      "tx_id": "pkt_2",
+      "timestamp": 1606196852.474183,
+      "frame_number": 2,
+      "protocol": "SIP",
+      "message_type": "REGISTER",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbceZEju3CCRNYig4DeNCKV71rE"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.69.1",
+      "_dst": "10.235.68.66",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_3",
+      "timestamp": 1606196852.486942,
+      "frame_number": 3,
+      "protocol": "SIP",
+      "message_type": "100 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbceZEju3CCRNYig4DeNCKV71rE"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.68.66",
+      "_dst": "10.235.69.1",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_5",
+      "timestamp": 1606196852.60304,
+      "frame_number": 5,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbceZEju3CCRNYig4DeNCKV71rE"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.68.66",
+      "_dst": "10.235.69.1",
+      "_teid": null,
+      "_seid": null
+    }
+  ]
+}

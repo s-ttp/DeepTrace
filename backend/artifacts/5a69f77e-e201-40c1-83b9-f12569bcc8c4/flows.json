@@ -1,0 +1,152 @@
+[
+  {
+    "packet_count": 10,
+    "total_bytes": 6920,
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "src_port": 5065,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 15.891000032424927,
+    "start_time": 1765805616.449,
+    "end_time": 1765805632.34,
+    "pps": 0.63,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "487 Request Terminated",
+        "failure_code": 487
+      }
+    ],
+    "has_errors": true
+  },
+  {
+    "packet_count": 10,
+    "total_bytes": 9191,
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.117",
+    "src_port": 6407,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 15.88700008392334,
+    "start_time": 1765805616.461,
+    "end_time": 1765805632.348,
+    "pps": 0.63,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "487 Request Terminated",
+        "failure_code": 487
+      }
+    ],
+    "has_errors": true
+  },
+  {
+    "packet_count": 4,
+    "total_bytes": 2008,
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "src_port": 5068,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 0.010999917984008789,
+    "start_time": 1765805440.17,
+    "end_time": 1765805440.181,
+    "pps": 363.64,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "487 Request Terminated",
+        "failure_code": 487
+      }
+    ],
+    "has_errors": true
+  },
+  {
+    "packet_count": 4,
+    "total_bytes": 2151,
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.115",
+    "src_port": 6401,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 0.01900005340576172,
+    "start_time": 1765805440.171,
+    "end_time": 1765805440.19,
+    "pps": 210.53,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "487 Request Terminated",
+        "failure_code": 487
+      }
+    ],
+    "has_errors": true
+  },
+  {
+    "packet_count": 4,
+    "total_bytes": 2725,
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "src_port": 5070,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 0.05800008773803711,
+    "start_time": 1765805616.36,
+    "end_time": 1765805616.418,
+    "pps": 68.97,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "407 Proxy Authentication Required",
+        "failure_code": 407
+      }
+    ],
+    "has_errors": true
+  },
+  {
+    "packet_count": 4,
+    "total_bytes": 3601,
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.117",
+    "src_port": 6411,
+    "dst_port": 5060,
+    "transport": "UDP",
+    "duration": 0.034999847412109375,
+    "start_time": 1765805616.374,
+    "end_time": 1765805616.409,
+    "pps": 114.29,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR",
+    "failures": [
+      {
+        "sip_error": "407 Proxy Authentication Required",
+        "failure_code": 407
+      }
+    ],
+    "has_errors": true
+  }
+]

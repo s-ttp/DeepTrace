@@ -1,0 +1,18 @@
+[
+  {
+    "session_key": "4g:diameter_session:1",
+    "generation": "4G",
+    "type": "Diameter Session",
+    "description": "Diameter signaling (Gx/Gy/S6a/Rx interfaces)",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 4,
+      "byte_count": 1296,
+      "flow_count": 1
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  }
+]

@@ -1,0 +1,120 @@
+{
+  "network_overview": "The capture shows control-plane signaling between 5G SMF/UPF (PFCP), 4G MME/SGW (GTPv2-C) and PCRF/HSS (Diameter) with repeated PFCP rule-creation failures and GTP \"S1-U Path Failure\" indications. No user-plane or voice traffic is observable at this UPF vantage point.",
+  "classification": "INCOMPLETE",
+  "health_score": 35,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "PFCP Session Establishment - Rule Creation Failure",
+      "spec_reference": "3GPP TS 29.244 \u00a77.5.5.2 (PFCP Cause IE)",
+      "evidence": [
+        "Cause code: 73",
+        "Message: PFCP Session Establishment Response (Msg-51)",
+        "Three consecutive failures with different SEIDs"
+      ],
+      "confidence": "HIGH",
+      "explanation": "Cause value 73 explicitly maps to 'Rule creation/modification Failure', indicating the UPF could not install the PDU session forwarding rules provided by the SMF."
+    },
+    {
+      "pattern_name": "GTPv2-C Path Failure - S1-U interface down",
+      "spec_reference": "3GPP TS 29.274 \u00a78.4 (Cause IE) - Code 128",
+      "evidence": [
+        "Cause code: 128",
+        "Message: Modify Bearer Response (Msg-0x15) and Create Bearer Response (Msg-0x11)",
+        "Both sent by 10.47.145.114 (SGW) to 10.47.145.231 (MME)"
+      ],
+      "confidence": "HIGH",
+      "explanation": "GTP Cause 128 is standardized as 'S1-U Path Failure', meaning the SGW cannot reach the eNodeB user-plane endpoint for the requested bearer."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Five PFCP requests (Msg-50) never answered within 27 s",
+      "severity": "critical",
+      "evidence": "Seq 852494-852497 plus one heartbeat (Msg-54) also unanswered"
+    },
+    {
+      "category": "Error Rate",
+      "finding": "100 % of PFCP Session Establishment attempts failed with cause 73",
+      "severity": "critical",
+      "evidence": "3 failures out of 3 attempts (pkts 9,17,25)"
+    },
+    {
+      "category": "Error Rate",
+      "finding": "100 % of GTP Modify/Create Bearer attempts failed with cause 128",
+      "severity": "critical",
+      "evidence": "Msg-0x15 and Msg-0x11 both returned S1-U Path Failure"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "UPF unable to install PDU session forwarding rules",
+      "description": "Every PFCP Session Establishment Response carries cause 73 'Rule creation/modification Failure', meaning the UPF rejected the SMF-provided PDRs/FARs/QERs.",
+      "impact": "PDU sessions cannot be established; user-plane traffic is blocked.",
+      "confidence_pct": 95,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Explicit standardized cause code 73 in three consecutive responses",
+      "evidence_refs": [
+        "PFCP Msg-51 cause 73 (pkts 9,17,25)",
+        "Different SEIDs 0x5d0110, 0x5e0110, 0x5f0110"
+      ]
+    },
+    {
+      "issue": "S1-U path unreachable between SGW and eNodeB",
+      "description": "SGW returns GTPv2-C cause 128 'S1-U Path Failure' for both Modify Bearer and Create Bearer procedures, indicating downstream user-plane connectivity loss.",
+      "impact": "Bearers cannot carry user-plane traffic; results in silent failure or drop for any attached UE.",
+      "confidence_pct": 95,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Standard cause 128 explicitly signals path failure",
+      "evidence_refs": [
+        "GTP Msg-0x15 cause 128 (pkt 3)",
+        "GTP Msg-0x11 cause 128 (pkt 32)"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Whether any user-plane packets actually traversed the GTP-U tunnel",
+      "reason": "GTP-U payload not captured at this UPF observation point",
+      "additional_capture_needed": "Mirror the N3 or S1-U interface to observe G-PDUs"
+    },
+    {
+      "aspect": "Root reason for UPF rule-install failure",
+      "reason": "No vendor-specific IE or log exposed in PFCP",
+      "additional_capture_needed": "UPF debug logs showing resource or configuration issue"
+    },
+    {
+      "aspect": "Health of SIP/IMS and voice service",
+      "reason": "SIP, RTP, SDP not present in trace",
+      "additional_capture_needed": "Capture on N5/N11 or IMS core interfaces"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate UPF resource availability (memory, CPU, table limits) for rule installation",
+      "rationale": "Three identical cause 73 failures point to a UPF-side resource or configuration problem",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Verify S1-U IP reachability and GTP-U path from SGW to listed eNodeB IP",
+      "rationale": "GTP cause 128 confirms downstream path failure",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Enable PFCP vendor-specific IE logging to obtain detailed rule-reject reason",
+      "rationale": "Standard cause 73 does not reveal which rule attribute failed",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "PFCP and GTP-C exchanges are orderly but fail functionally: every PDU session attempt rejected by UPF, every bearer attempt rejected by SGW.",
+    "user_plane_health": "Not observable at this capture point (no GTP-U payload decoded).",
+    "voice_quality": "Not observable (no RTP or SIP captured).",
+    "cross_plane_correlation": "Control-plane failures (PFCP rule install, GTP path) predict user-plane unavailability even though user-plane itself is not captured."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant MME\n    participant SGW\n    participant SMF\n    participant UPF\n    Note over MME,UPF: 27-second window\n    MME->>SGW: GTP Create Session 0x14 (TEID 0x005c0110)\n    SGW->>MME: GTP Modify Bearer 0x15 Cause 128 (S1-U Path Failure)\n    SMF->>UPF: PFCP Establish 0x32 (SEID 0x5a0130)\n    UPF-->>SMF: [No Response \u2192 timeout]\n    SMF->>UPF: PFCP Establish 0x32 (SEID 0x5d0110)\n    UPF->>SMF: PFCP Establish 0x33 Cause 73 (Rule creation Failure)\n    MME->>SGW: GTP Create Bearer 0x10\n    SGW->>MME: GTP Create Bearer 0x11 Cause 128 (S1-U Path Failure)"
+}

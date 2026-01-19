@@ -1,0 +1,200 @@
+[
+  {
+    "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC",
+    "start_time": 1765805616.36,
+    "end_time": 1765805632.34,
+    "duration_sec": 15.98,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "CANCELLED",
+    "messages": [
+      {
+        "time": 1765805616.36,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE"
+      },
+      {
+        "time": 1765805616.36,
+        "type": "100 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805616.41,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null
+      },
+      {
+        "time": 1765805616.418,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK"
+      },
+      {
+        "time": 1765805616.449,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE"
+      },
+      {
+        "time": 1765805616.449,
+        "type": "100 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805617.003,
+        "type": "183 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805617.035,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK"
+      },
+      {
+        "time": 1765805617.251,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805617.321,
+        "type": "180 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.327,
+        "type": "CANCEL",
+        "code": "Q.850;cause=16;text=normal call clearing\"\"",
+        "method": "CANCEL"
+      },
+      {
+        "time": 1765805632.327,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.328,
+        "type": "487 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.34,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK"
+      }
+    ],
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "ua": null,
+    "msg_count": 14
+  },
+  {
+    "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC",
+    "start_time": 1765805616.374,
+    "end_time": 1765805632.348,
+    "duration_sec": 15.974,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "CANCELLED",
+    "messages": [
+      {
+        "time": 1765805616.374,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE"
+      },
+      {
+        "time": 1765805616.398,
+        "type": "100 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805616.409,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null
+      },
+      {
+        "time": 1765805616.409,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK"
+      },
+      {
+        "time": 1765805616.461,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE"
+      },
+      {
+        "time": 1765805616.483,
+        "type": "100 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805616.987,
+        "type": "183 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805617.036,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK"
+      },
+      {
+        "time": 1765805617.25,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805617.32,
+        "type": "180 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.329,
+        "type": "CANCEL",
+        "code": "Q.850;cause=16;text=normal call clearing\"\"",
+        "method": "CANCEL"
+      },
+      {
+        "time": 1765805632.347,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.347,
+        "type": "487 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1765805632.348,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK"
+      }
+    ],
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.117",
+    "ua": null,
+    "msg_count": 14
+  }
+]

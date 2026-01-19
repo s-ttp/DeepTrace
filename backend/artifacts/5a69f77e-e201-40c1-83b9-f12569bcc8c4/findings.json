@@ -1,0 +1,57 @@
+{
+  "network_overview": "The capture contains only IMS signalling for two VoLTE/VoNR calls that were both cancelled after ~16 s; every flow ended with SIP 487 \"Request Terminated\" and no bearer-plane (RTP) traffic is present, so no actual voice minutes were delivered.",
+  "health_score": 30,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % of SIP INVITEs were answered with 407 Proxy Authentication Required, followed by successful re-INVITE, 183/180 ringing, and finally CANCEL after 16 s; no 200 OK for call completion seen.",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Zero RTP packets captured; media bearer was never established, so voice quality metrics (MOS, packet-loss, jitter) are undefined.",
+      "severity": "warning"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Subscriber-side call abandonment after authentication",
+      "description": "Both call legs progressed normally through IMS authentication (407\u2192re-INVITE), early media (183) and ringing (180), but the originating UE sent CANCEL with cause 16 (normal call clearing) after ~16 s. This matches user-initiated hang-up rather than a network failure.",
+      "impact": "Post-dial delay perception; no revenue-generating call minutes.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_29 (CANCEL cause=16)",
+        "Call:k4ke1hpw\u2026 duration=15.98 s",
+        "Call:asbck4k\u2026 duration=15.97 s"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Analyse why subscribers abandon calls after ~16 s of ringing; correlate with radio coverage, paging success and S-CSCF Alert-Timer (default 15-20 s) to confirm network ringing duration aligns with user expectations.",
+      "rationale": "Reduces perceived post-dial delay and increases answer-seizure ratio (ASR).",
+      "category": "Performance"
+    },
+    {
+      "priority": 2,
+      "action": "Enable SIP OPTIONS keep-alive or reduce UDP T1 retransmission timer on P-CSCF to avoid the 68-364 pkt/s bursts seen in short flows.",
+      "rationale": "Lowens signalling load and risk of NAT/firewall state loss.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 3,
+      "action": "Capture concurrent GTP-U bearer trace for same IMS Call-IDs to verify that dedicated bearer (QCI=1) setup succeeded and RTP was offered correctly.",
+      "rationale": "Ensures media plane readiness so future calls can complete.",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Control-plane completed authentication, early media and ringing; no SIP 5xx or retransmission anomalies detected.",
+    "user_plane_health": "No GTP-U/RTP packets observed; dedicated bearer establishment cannot be confirmed from this trace.",
+    "voice_quality": "No RTP stream \u21d2 no MOS, jitter or packet-loss data; call never reached active speech phase.",
+    "cross_plane_correlation": "Signalling reached 180 Ringing but absence of bearer trace means media readiness is unverified; user abandonment occurred before 200 OK."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    UE->>P-CSCF: INVITE\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF->>P-CSCF: 407 Proxy Auth Required\n    P-CSCF->>UE: 407 Proxy Auth Required\n    UE->>P-CSCF: ACK\n    UE->>P-CSCF: INVITE (with credentials)\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF->>P-CSCF: 183 Session Progress\n    P-CSCF->>UE: 183 Session Progress\n    UE->>P-CSCF: PRACK\n    S-CSCF->>P-CSCF: 180 Ringing\n    P-CSCF->>UE: 180 Ringing\n    Note over UE,S-CSCF: ~16 s ringing\n    UE->>P-CSCF: CANCEL (cause=16)\n    P-CSCF->>S-CSCF: CANCEL\n    S-CSCF->>P-CSCF: 487 Request Terminated\n    P-CSCF->>UE: 487 Request Terminated\n    UE->>P-CSCF: ACK"
+}

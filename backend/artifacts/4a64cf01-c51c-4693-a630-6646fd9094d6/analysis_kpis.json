@@ -1,0 +1,78 @@
+{
+  "procedure_kpis": {
+    "GTP-Msg-0x14": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-54": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "GTP-Msg-0x15": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Unknown Cause 128": 1
+      }
+    },
+    "PFCP-Msg-55": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Request Accepted": 1
+      }
+    },
+    "Cmd-272": {
+      "attempts": 2,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "2001": 1
+      }
+    },
+    "PFCP-Msg-50": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-51": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "No Resources Available": 3,
+        "Request Accepted": 1
+      }
+    },
+    "GTP-Msg-0x10": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "GTP-Msg-0x11": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Unknown Cause 128": 1
+      }
+    }
+  },
+  "time_window_diffs": {},
+  "sctp_stats": "-------------------------------------------- SCTP Statistics --------------------------------------------------------------------------\n|  Total packets RX/TX 0\n---------------------------------------------------------------------------------------------------------------------------------------\n|   Source IP   |PortA|    Dest. IP   |PortB|  DATA  |  SACK  |  HBEAT |HBEATACK|  INIT  | INITACK| COOKIE |COOKIACK| ABORT  |  ERROR |\n---------------------------------------------------------------------------------------------------------------------------------------\n---------------------------------------------------------------------------------------------------------------------------------------\n",
+  "voice_stats": {
+    "trace_type": "EMPTY_OR_UNKNOWN",
+    "total_calls": 0,
+    "total_registrations": 0,
+    "dropped": 0,
+    "media_issues": 0
+  }
+}

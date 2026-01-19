@@ -1,0 +1,56 @@
+[
+  {
+    "call_id": "asbc47zRmWaCXwykhNhFzykadYy4",
+    "start_time": 1606196850.078552,
+    "end_time": 1606196850.196859,
+    "duration_sec": 0.118,
+    "state": "FAILED",
+    "method": "REGISTER",
+    "end_reason": "REGISTER_TIMEOUT",
+    "messages": [
+      {
+        "time": 1606196850.078552,
+        "type": "REGISTER",
+        "code": null,
+        "method": "REGISTER"
+      },
+      {
+        "time": 1606196850.096223,
+        "type": "100 Response",
+        "code": null,
+        "method": null
+      },
+      {
+        "time": 1606196850.196859,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      }
+    ],
+    "src_ip": "10.235.69.1",
+    "dst_ip": "10.235.68.68",
+    "ua": null,
+    "msg_count": 3
+  },
+  {
+    "call_id": "asbcqzdo4HG9RSkfPCNfIvTgvw9H",
+    "start_time": 1606196850.318163,
+    "end_time": 1606196850.318163,
+    "duration_sec": 0.0,
+    "state": "FAILED",
+    "method": "200 Response",
+    "end_reason": "TRANSACTION_TIMEOUT",
+    "messages": [
+      {
+        "time": 1606196850.318163,
+        "type": "200 Response",
+        "code": null,
+        "method": null
+      }
+    ],
+    "src_ip": "10.235.69.1",
+    "dst_ip": "10.235.68.65",
+    "ua": null,
+    "msg_count": 1
+  }
+]

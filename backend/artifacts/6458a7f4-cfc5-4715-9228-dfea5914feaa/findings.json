@@ -1,0 +1,133 @@
+{
+  "network_overview": "The capture contains IMS signaling-plane traffic using SIP only; no other protocols were observed. Multiple SIP INVITE dialogs show normal provisional handling (100/180/183, PRACK, UPDATE/200) but many sessions terminate via CANCEL from the originating side and some terminate via BYE carrying non-standard reason text/parameters. Media/user-plane is not captured at this observation point, so audio/RTP behavior is not observable.",
+  "classification": "CANCELLED_BY_CALLER",
+  "health_score": 35,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "Caller cancels call before final response, resulting in 487 Request Terminated",
+      "spec_reference": "RFC 3261 (CANCEL and 487 Request Terminated behavior)",
+      "evidence": [
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL at 1726068029.302117 followed by SIP 200 Response at 1726068029.304146 and SIP 487 Response at 1726068029.304147, then ACK at 1726068029.335153",
+        "Call-ID asbc1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL at 1726068029.306026 followed by SIP 200 Response at 1726068029.319611 and SIP 487 Response at 1726068029.319634, then ACK at 1726068029.322831"
+      ],
+      "confidence": "HIGH",
+      "explanation": "The observed sequence CANCEL -> 200 (to CANCEL) -> 487 (to INVITE) -> ACK is a standard SIP call-cancel flow indicating the caller terminated the attempt before completion."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Multiple call attempts are explicitly cancelled by the originating side after receiving provisional responses (180/183) and successful PRACK/UPDATE exchanges, indicating user-initiated termination rather than a network reject in these dialogs.",
+      "severity": "warning",
+      "evidence": "Example Call-ID 1eEeXOyORCYzPJN6BcinNvKt: INVITE 1726067992.944127; 183 1726067995.564286; 180 1726067996.735536; CANCEL 1726068029.302117; 487 1726068029.304147"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Some dialogs show BYE carrying a SIP-cause parameter of 503 with a text string 'PS to CS Handover', but this is embedded as free-form text/parameters and cannot be validated as a standard SIP response in this trace.",
+      "severity": "warning",
+      "evidence": "Call-ID asbcM3hLVREVD5ydTfb0VA0EWIeM: BYE code string 'SIP;cause=503;text=... PS to CS Handover\"\"' at 1726069583.069769 and 1726069583.07765, followed by 200 Response at 1726069583.102766"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Non-standard BYE reason parameters were observed ('X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E'), which are vendor-specific/proprietary and cannot be mapped to a standard 3GPP/RFC cause from this evidence alone.",
+      "severity": "warning",
+      "evidence": "Call-ID ffll43qaga4q76d36gy4344yyw4g0ggl@10.174.4.4: BYE code string 'X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E' at 1726070079.247469/1726070079.263163"
+    },
+    {
+      "category": "Data Consistency",
+      "finding": "The provided 'ringback_issue' findings claiming no 180/183 are inconsistent with the observed message lists for multiple calls, which do include 180 and/or 183 responses.",
+      "severity": "info",
+      "evidence": "Example Call-ID 1eEeXOyORCYzPJN6BcinNvKt includes 183 at 1726067995.564286 and 180 at 1726067996.735536 while media_findings.evidence.has_180/has_183 is false"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Call attempts terminated by caller (CANCEL) before establishment",
+      "description": "Several failed call attempts end with SIP CANCEL initiated by the originating side, followed by a 200 response to the CANCEL and a 487 response terminating the original INVITE transaction, then ACK. The CANCEL messages include a code string indicating user action: 'SIP;cause=200;text=Call Rejected By User\"\"'.",
+      "impact": "Call setup does not complete; the INVITE transaction is terminated and the call remains in a failed/cancelled state.",
+      "confidence_pct": 95,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Direct packet-level evidence shows the caller sending CANCEL and receiving the standard SIP transaction termination (200 to CANCEL, 487 to INVITE, ACK). The user-action text is explicitly present in the CANCEL code string.",
+      "evidence_refs": [
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL code='SIP;cause=200;text=Call Rejected By User\"\"' at 1726068029.302117",
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP 487 Response at 1726068029.304147",
+        "Call-ID asbc1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL code='SIP;cause=200;text=Call Rejected By User\"\"' at 1726068029.306026 and also at 1726068029.320551",
+        "Call-ID asbc1eEeXOyORCYzPJN6BcinNvKt: SIP 487 Response at 1726068029.319634"
+      ]
+    },
+    {
+      "issue": "Call tear-down indicated by BYE with SIP-cause parameter 503 text 'PS to CS Handover' (interpretation not provable from SIP-only evidence)",
+      "description": "At least one dialog ends with BYE messages containing a code string 'SIP;cause=503;text=... PS to CS Handover\"\"' and is acknowledged with SIP 200 Response. The meaning of 'PS to CS Handover' and how it relates to radio/core events cannot be proven from this SIP-only capture.",
+      "impact": "Established dialog is terminated; the call ends via BYE.",
+      "confidence_pct": 70,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "Direct evidence of BYE with embedded cause text exists, but the underlying network event implied by the text is not observable because only SIP is present and the text appears as free-form/vendor information.",
+      "evidence_refs": [
+        "Call-ID asbcM3hLVREVD5ydTfb0VA0EWIeM: SIP BYE code='SIP;cause=503;text=03077.09093.A.005.417.228.0.0.00055.00000009 PS to CS Handover\"\"' at 1726069583.069769 and 1726069583.07765",
+        "Call-ID asbcM3hLVREVD5ydTfb0VA0EWIeM: SIP 200 Response at 1726069583.102766"
+      ]
+    },
+    {
+      "issue": "Call tear-down indicated by proprietary BYE reason parameters (X.int;reasoncode=0x00000000)",
+      "description": "Some dialogs end with BYE messages carrying 'X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E'. These parameters are not standard SIP response codes and appear vendor-specific/proprietary; their meaning cannot be derived from this evidence.",
+      "impact": "Established dialog is terminated; the call ends via BYE.",
+      "confidence_pct": 65,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "BYE and 200 OK exchange is clearly observed; however the reasoncode semantics are not standard/mapped in the provided evidence, so the underlying trigger is not provable.",
+      "evidence_refs": [
+        "Call-ID ffll43qaga4q76d36gy4344yyw4g0ggl@10.174.4.4: SIP BYE code='X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E' at 1726070079.247469 and 1726070079.263163",
+        "Call-ID ffll43qaga4q76d36gy4344yyw4g0ggl@10.174.4.4: SIP 200 Response at 1726070079.363189 and 1726070079.379242"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Audio path / ringback / RTP quality",
+      "reason": "Only SIP is observed and the capture context explicitly states IMS signaling plane only; no media-plane packets are present.",
+      "additional_capture_needed": "Capture at a point where RTP/RTCP is observable for the same call-ids (or correlate via SDP once SDP is available)."
+    },
+    {
+      "aspect": "Whether any SIP INVITE truly timed out vs was answered",
+      "reason": "Some sessions labeled 'INVITE_SETUP_TIMEOUT' in the provided analysis also show SIP 200 Response and ACK within ~9 seconds, indicating a call was answered at least at SIP level; the reason for the timeout label is not derivable from the packet list alone.",
+      "additional_capture_needed": "Full SIP message bodies/headers (including CSeq, To-tag, and any correlation fields) and complete call classification logic inputs used by the generating system."
+    },
+    {
+      "aspect": "Meaning of BYE code strings containing 'PS to CS Handover' or 'X.int;reasoncode=0x00000000'",
+      "reason": "These appear as free-form text/parameters and are not standard-mapped causes in the provided evidence; no other protocols are present to corroborate the underlying event.",
+      "additional_capture_needed": "Vendor mapping documentation for the proprietary reason parameters and/or additional correlated signaling captures that show the event source."
+    },
+    {
+      "aspect": "IMS registration/policy/auth interactions",
+      "reason": "No Diameter sessions are present (Diameter Sessions: 0; Protocols Detected: SIP only), so any Diameter-side causes cannot be evaluated at this capture point.",
+      "additional_capture_needed": "A synchronized capture including the expected Diameter interfaces for the same time window and correlated session identifiers."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Focus RCA on user/device or upstream call-control behavior for the CANCELLED dialogs by correlating the caller-side trigger for CANCEL (user action vs application logic).",
+      "rationale": "Direct SIP evidence shows CANCEL initiated by the caller with code string 'SIP;cause=200;text=Call Rejected By User\"\"' followed by 487 termination of INVITE.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "For BYE terminations carrying 'SIP;cause=503;text=... PS to CS Handover', obtain the exact SIP header context (full BYE including any Reason-like header usage) and correlate with network-element logs that generate this text.",
+      "rationale": "The BYE cause is present only as embedded text/parameters in SIP; without additional evidence the underlying trigger cannot be proven.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "If ringback/audio issues are suspected, run a parallel capture where media is observable and ensure SDP bodies are captured for codec/direction analysis.",
+      "rationale": "No SDP media detected and no RTP/RTCP is present at the IMS_SIGNALING observation point, so ringback and audio path cannot be concluded from this capture.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP signaling shows normal early-dialog behavior in multiple calls (100/183/PRACK/200, UPDATE/200, and 180 observed). Many attempts terminate via caller-originated CANCEL followed by 487, indicating user/app-driven cancellation rather than a SIP reject response in those dialogs.",
+    "user_plane_health": "Not observable at this capture point (no user-plane protocols or media-plane packets are present; GTP tunnels: 0; RTP not captured).",
+    "voice_quality": "Not observable at this capture point (no RTP/RTCP and no SDP media detected).",
+    "cross_plane_correlation": "Not possible from this evidence because only SIP signaling is present and there are no user-plane/media indicators to correlate."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UAC as Caller (UAC)\n    participant IMS as IMS Peer\n\n    UAC->>IMS: SIP INVITE\n    IMS-->>UAC: SIP 100 Response\n    IMS-->>UAC: SIP 183 Response\n    UAC->>IMS: SIP PRACK\n    IMS-->>UAC: SIP 200 Response\n    UAC->>IMS: SIP UPDATE\n    IMS-->>UAC: SIP 200 Response\n    IMS-->>UAC: SIP 180 Response\n    UAC->>IMS: SIP CANCEL (code: SIP,cause=200,text=Call Rejected By User)\n    IMS-->>UAC: SIP 200 Response (to CANCEL)\n    IMS-->>UAC: SIP 487 Response (to INVITE)\n    UAC->>IMS: SIP ACK"
+}

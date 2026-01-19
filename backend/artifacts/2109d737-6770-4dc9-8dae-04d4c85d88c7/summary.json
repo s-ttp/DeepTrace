@@ -1,0 +1,11 @@
+{
+  "total_flows": 1,
+  "total_packets": 4,
+  "total_bytes": 1296,
+  "protocols": [
+    "Diameter"
+  ],
+  "duration": 3.044502019882202,
+  "start_time": 1722044076.306955,
+  "end_time": 1722044079.351457
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "session_key": "4g:diameter_session:2",
+    "generation": "4G",
+    "type": "Diameter Session",
+    "description": "Diameter signaling (Gx/Gy/S6a/Rx interfaces)",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 6,
+      "byte_count": 3576,
+      "flow_count": 2
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "5g:gtp-u_tunnel:1",
+    "generation": "5G",
+    "type": "GTP-U Tunnel",
+    "description": "GPRS Tunneling Protocol - User Plane",
+    "identifiers": {
+      "teids": [
+        3023713083
+      ]
+    },
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 2,
+      "byte_count": 234,
+      "flow_count": 1
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "4g:gtp-c_session:1",
+    "generation": "4G",
+    "type": "GTP-C Session",
+    "description": "GPRS Tunneling Protocol - Control Plane",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 2,
+      "byte_count": 234,
+      "flow_count": 1
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  }
+]

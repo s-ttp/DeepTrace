@@ -1,0 +1,143 @@
+{
+  "network_overview": "The capture contains sparse 4G/LTE control-plane signaling: SCTP with S1-AP/X2-AP procedures (Proc-11/Proc-13/Proc-23) and multiple Diameter command exchanges (Cmd-318/Cmd-316/Cmd-324) that show Result-Code 2001 (DIAMETER_SUCCESS). A small amount of GTP-C over UDP/2123 and DNS over UDP are present, but there is no observable voice/IMS or media-plane data in the provided evidence.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 62,
+  "health_status": "warning",
+  "pattern_matches": [
+    {
+      "pattern_name": "Diameter Answer indicates success (DIAMETER_SUCCESS / Result-Code 2001)",
+      "spec_reference": "RFC 6733 (Diameter Base Protocol) - Result-Code 'DIAMETER_SUCCESS' (2001)",
+      "evidence": [
+        "Diameter Cmd-318 Answer: cause=2001, cause_label=DIAMETER_SUCCESS (frame 4, timestamp 1752129502.777398)",
+        "Diameter Cmd-316 Answer: cause=2001, cause_label=DIAMETER_SUCCESS (frame 16, timestamp 1752129502.917645)",
+        "Diameter Cmd-324 Answer: cause=2001, cause_label=DIAMETER_SUCCESS (frame 20, timestamp 1752129502.929171)",
+        "Repeated later: Cmd-318 Answer (frame 40, timestamp 1752129513.201413), Cmd-316 Answer (frame 52, timestamp 1752129513.339554), Cmd-324 Answer (frame 56, timestamp 1752129513.365188)"
+      ],
+      "confidence": "HIGH",
+      "explanation": "Multiple Diameter Answers explicitly carry Result-Code 2001 labeled as DIAMETER_SUCCESS in the provided deep transactions, demonstrating successful completion for those observed Diameter command exchanges."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Control-plane signaling is extremely low rate over a long duration, consistent with idle/maintenance traffic rather than a fully captured active procedure burst.",
+      "severity": "warning",
+      "evidence": "Top flow S1-AP/X2-AP over SCTP: 27 packets over ~673.155s (0.04 pps) between 10.47.19.6:36412 and 10.233.39.38:36422"
+    },
+    {
+      "category": "Diameter",
+      "finding": "Observed Diameter transactions show explicit success (2001) for Cmd-318/Cmd-316/Cmd-324, but the summary counters indicate 'Diameter Sessions: 0' and procedure success_rate 0.0, suggesting metrics aggregation/classification inconsistency rather than protocol failure evidence.",
+      "severity": "warning",
+      "evidence": "Deep transactions show DIAMETER_SUCCESS (2001) in frames 4/16/20/40/52/56, while CAPTURE STATISTICS lists 'Diameter Sessions: 0' and PROCEDURE KPIs show success_rate 0.0 with top_causes DIAMETER_SUCCESS"
+    },
+    {
+      "category": "GTP-C",
+      "finding": "GTP-C is present on UDP/2123 but message types/causes are not provided; also 'GTP Tunnels: 0' indicates no user-plane tunnel visibility from this dataset.",
+      "severity": "info",
+      "evidence": "Top flow: GTP-C UDP/2123 between 10.47.17.134 and 10.47.17.115 (6 packets, duration ~672.977s); CAPTURE STATISTICS: 'GTP Tunnels: 0'"
+    },
+    {
+      "category": "DNS",
+      "finding": "DNS bursts are present and appear as short exchanges (12 packets over ~1.6\u20131.7 ms per listed DNS flow). No DNS error indicators are provided in the evidence.",
+      "severity": "info",
+      "evidence": "Top flows: DNS UDP (12 packets, ~3096 bytes) with durations ~0.0016\u20130.0017s for 100.65.172.15/16/22 (as listed)"
+    },
+    {
+      "category": "S1-AP/X2-AP",
+      "finding": "S1-AP procedures (Proc-11/Proc-13/Proc-23) are observed but without any included 'cause' fields, so accept/reject/failure outcomes cannot be determined from the provided evidence.",
+      "severity": "warning",
+      "evidence": "Deep transactions: multiple S1AP Proc-11 / Proc-13 / Proc-23 entries with cause=null (e.g., frames 2,5,34,36)"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Inconclusive: no packet-level failure/reject evidence provided for S1-AP or GTP-C",
+      "description": "The dataset shows S1-AP procedures (Proc-11/Proc-13/Proc-23) with no included cause values, and Diameter exchanges that explicitly succeed (Result-Code 2001). GTP-C is present only as a sparse UDP/2123 flow with no shown message types or cause IEs. Therefore, no concrete reject/error/timeout root cause can be proven from the provided packet-level evidence.",
+      "impact": "Prevents determination of whether any LTE control-plane procedure failed (and why), and prevents correlating S1-AP activity with any GTP-C session lifecycle outcome from this capture.",
+      "confidence_pct": 85,
+      "confidence_level": "HIGH",
+      "confidence_justification": "High confidence that a specific failure root cause cannot be asserted because the only explicit result codes shown are Diameter successes (2001), and no S1-AP/GTP-C failure causes or error codes are provided in the evidence.",
+      "evidence_refs": [
+        "Diameter Cmd-318 Answer: Result-Code 2001 (DIAMETER_SUCCESS) at timestamp 1752129502.777398 (frame 4)",
+        "Diameter Cmd-316 Answer: Result-Code 2001 (DIAMETER_SUCCESS) at timestamp 1752129502.917645 (frame 16)",
+        "Diameter Cmd-324 Answer: Result-Code 2001 (DIAMETER_SUCCESS) at timestamp 1752129502.929171 (frame 20)",
+        "S1AP Proc-11/Proc-13/Proc-23 entries show cause=null (e.g., frames 2,5,34,36)",
+        "GTP-C present as UDP/2123 flow with 6 packets; no message_type/cause shown (Top Flows section)"
+      ]
+    },
+    {
+      "issue": "Metrics/aggregation inconsistency: procedure success_rate reported as 0.0 despite DIAMETER_SUCCESS evidence",
+      "description": "The PROCEDURE KPIs report success_rate 0.0 for multiple commands/procedures while simultaneously listing DIAMETER_SUCCESS as the top cause for Cmd-318/Cmd-316/Cmd-324 and the deep transactions show explicit Result-Code 2001 Answers. This indicates an inconsistency in KPI computation or sessionization in the reporting layer, not a proven network failure from packets.",
+      "impact": "May mislead operational dashboards by indicating systemic failures when the observed Diameter transactions actually succeed.",
+      "confidence_pct": 75,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "There is direct evidence of successful Diameter result codes, and direct evidence of contradictory KPI fields; however, the internal KPI logic is not observable from the capture itself, so the exact reason for the mismatch cannot be proven.",
+      "evidence_refs": [
+        "PROCEDURE KPIs: Cmd-318 attempts=6 success_rate=0.0 top_causes.DIAMETER_SUCCESS=3",
+        "PROCEDURE KPIs: Cmd-316 attempts=6 success_rate=0.0 top_causes.DIAMETER_SUCCESS=3",
+        "PROCEDURE KPIs: Cmd-324 attempts=6 success_rate=0.0 top_causes.DIAMETER_SUCCESS=3",
+        "Deep transactions show Cmd-318/Cmd-316/Cmd-324 Answers with cause=2001 (DIAMETER_SUCCESS) (frames 4,16,20,40,52,56)"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Whether any S1-AP procedure succeeded or failed (and the specific failure cause, if any)",
+      "reason": "S1-AP entries are provided only as procedure identifiers (Proc-11/Proc-13/Proc-23) with cause=null and without the underlying initiating/success/failure messages and IEs.",
+      "additional_capture_needed": "Full decoded S1-AP message details including procedure direction and any Cause IEs (e.g., failure/reject messages) from the same SCTP association."
+    },
+    {
+      "aspect": "GTP-C procedure outcome and reason (create/modify/delete and any cause codes)",
+      "reason": "GTP-C is only evidenced as a UDP/2123 flow with 6 packets; no GTP-C message types, sequence correlation, or cause IE values are provided.",
+      "additional_capture_needed": "GTP-C decoded message list (message_type, cause IE, TEID fields where applicable) for the UDP/2123 flow between 10.47.17.134 and 10.47.17.115."
+    },
+    {
+      "aspect": "User-plane establishment and tunnel status",
+      "reason": "CAPTURE STATISTICS show 'GTP Tunnels: 0' and no GTP-U is listed in protocols detected; user-plane tunneling is not observable from this dataset.",
+      "additional_capture_needed": "Capture on interfaces where user-plane encapsulation is visible (if applicable) or provide decoded session/tunnel records showing TEIDs/tunnel lifecycle."
+    },
+    {
+      "aspect": "Voice/IMS call setup and media quality",
+      "reason": "No SIP, SDP, or RTP is present in protocols detected; VOICE & IMS analysis shows zero calls and no media findings.",
+      "additional_capture_needed": "IMS signaling capture that includes SIP and (if assessing quality) media-plane RTP at the relevant observation point."
+    },
+    {
+      "aspect": "Meaningful correlation between Diameter commands and a specific LTE procedure",
+      "reason": "Diameter commands are shown only as Cmd-318/Cmd-316/Cmd-324 with success result codes; no interface/application context or correlated subscriber/session identifiers are provided beyond opaque Session-Id strings, and 'Diameter Sessions: 0' suggests incomplete sessionization.",
+      "additional_capture_needed": "Diameter AVP-level decode (including Application-Id and key AVPs relevant to the command) and consistent sessionization output for the same traffic."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Re-export or re-run decoding to include full S1-AP message names and Cause IEs (not just Proc-xx identifiers).",
+      "rationale": "Root cause determination for LTE control-plane issues requires explicit failure/reject messages and their cause fields; current evidence has cause=null for S1-AP procedures.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Provide decoded GTP-C message types and any Cause IE values for the UDP/2123 flow (10.47.17.134 \u2194 10.47.17.115).",
+      "rationale": "GTP-C cause codes and message sequence (Create/Modify/Delete) are necessary to determine whether session control succeeded or failed; only a sparse flow summary is currently available.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Investigate KPI/sessionization logic producing success_rate=0.0 while also reporting DIAMETER_SUCCESS and showing Result-Code 2001 in packets.",
+      "rationale": "Contradictory KPI outputs can trigger false alarms; packet evidence demonstrates successful Diameter Answers (2001) for multiple commands.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 4,
+      "action": "If the goal is end-to-end service verification, capture at a known observation point and include the expected planes (control and, where applicable, user-plane).",
+      "rationale": "The capture point is UNKNOWN and 'GTP Tunnels: 0' limits conclusions about session establishment and data forwarding visibility.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Diameter signaling observed in deep transactions is successful (Result-Code 2001 for Cmd-318/Cmd-316/Cmd-324). S1-AP/X2-AP procedures are present but outcomes cannot be determined because cause and detailed message IEs are not provided.",
+    "user_plane_health": "Not observable at this capture point: no GTP-U is listed in detected protocols and statistics show 'GTP Tunnels: 0'. DNS is present as IP-layer traffic but does not prove mobile user-plane tunnel establishment in this dataset.",
+    "voice_quality": "Not observable: no SIP/SDP/RTP present in detected protocols and VOICE & IMS analysis reports zero calls and no media findings.",
+    "cross_plane_correlation": "Limited: Diameter successes (2001) are observable, but there are no subscriber identities and no explicit linkage to S1-AP/GTP-C procedures in the provided evidence to prove an end-to-end procedure outcome."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant D1 as 10.47.18.6\n    participant D2 as 10.47.9.68\n    participant D3 as 10.47.18.10\n    participant S1a as 10.47.19.6\n    participant S1b as 10.233.39.38\n\n    D1->>D2: Diameter Cmd-318 (frame 1)\n    D2-->>D1: Diameter Cmd-318 Answer Result-Code=2001 DIAMETER_SUCCESS (frame 4)\n\n    S1a->>S1b: S1AP Proc-11 (frame 2)\n    S1b-->>S1a: S1AP Proc-13 (frame 7)\n\n    D1->>D2: Diameter Cmd-316 (frame 15)\n    D2-->>D1: Diameter Cmd-316 Answer Result-Code=2001 DIAMETER_SUCCESS (frame 16)\n\n    D3->>D2: Diameter Cmd-324 (frame 17)\n    D2-->>D3: Diameter Cmd-324 Answer Result-Code=2001 DIAMETER_SUCCESS (frame 20)\n\n    S1a->>S1b: S1AP Proc-23 (frame 34)\n    S1b-->>S1a: S1AP Proc-23 (frame 36)"
+}

@@ -1,0 +1,73 @@
+{
+  "network_overview": "The capture shows 100 % failed VoLTE/VoNR call attempts between IMS clients and the core. All four calls are rejected with SIP 407 \u201cProxy Authentication Required\u201d, followed either by user-initiated CANCEL (calls #1-#2) or setup-timeout (calls #3-#4). No RTP/media flows are present, indicating bearer resources were never allocated.",
+  "health_score": 25,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "8 INVITEs across 7 UDP flows, all challenged with 407; no second INVITE carries credentials \u2192 authentication loop",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Zero RTP packets; media bearer never established, so voice service is effectively down",
+      "severity": "critical"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Missing IMS AKA credentials in UE",
+      "description": "Every initial INVITE is answered with 407 Proxy Authentication Required, but the UE re-submits INVITE without an Authorization header (digest/AKA). This implies the UE has no valid ISIM credentials or the P-CSCF is not configured to challenge correctly.",
+      "impact": "All VoLTE/VoNR calls fail; subscribers cannot originate or receive voice calls.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_5 (407 cause=Q.850;21)",
+        "Tx:pkt_7 (407 cause=Q.850;21)",
+        "Tx:pkt_33 (407 cause=Q.850;21)",
+        "Tx:pkt_35 (407 cause=Q.850;21)"
+      ]
+    },
+    {
+      "issue": "Overly short INVITE transaction timeout",
+      "description": "Calls #3-#4 stop at 180 Ringing and are marked FAILED with reason INVITE_SETUP_TIMEOUT after <1 s, although 180 arrived ~850 ms after INVITE. This suggests a client or SBC timer <1 s, far below 3GPP recommended T9=10 s.",
+      "impact": "Calls prematurely classified as failed; CDRs will show false negatives and customers may redial repeatedly.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "Call:mwm1jee111y4q4epknlnph0ynmypej4h@UAC duration=0.935 s end_reason=INVITE_SETUP_TIMEOUT"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Verify ISIM integrity: check that UE contains valid IMS private identity (IMPI) and secret key; if missing, push new ISIM OTA or replace UICC.",
+      "rationale": "Without credentials UE cannot respond to 407 challenge, blocking every call.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Audit P-CSCF authentication policy: ensure it requests digest-AKA and not plain MD5; confirm 401/407 is sent only once per call attempt.",
+      "rationale": "Repeated challenges increase signaling load and call set-up time.",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Increase SIP T1/T9 timers in UE and SBC to 3GPP defaults (T1=500 ms, T9=10 s) to avoid spurious timeout alarms.",
+      "rationale": "Prevents premature call abortion when far-end alerting is slightly delayed.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 4,
+      "action": "Collect simultaneous Diameter Wx/Mw traces (UAR/UAA) to confirm HSS returns correct authentication vectors.",
+      "rationale": "Isolates whether failure is in UE, P-CSCF or HSS.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Control-plane is alive (SIP 100/180/183/200 seen) but authentication procedure breaks every call.",
+    "user_plane_health": "No GTP Create-Bearer-Request/Response observed; QCI-1 bearer never established, therefore no user-plane.",
+    "voice_quality": "No RTP flows \u21d2 no MOS, packet-loss or jitter can be measured; service is unavailable rather than degraded.",
+    "cross_plane_correlation": "Signaling failure (407) stops bearer creation, so user-plane never starts; fixing SIP auth will automatically allow bearer set-up."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    UE->>P-CSCF: INVITE (no auth)\n    P-CSCF->>UE: 407 Proxy Auth Required\n    UE->>P-CSCF: ACK\n    UE->>P-CSCF: INVITE (still no auth!)\n    P-CSCF->>S-CSCF: 407 (relayed)\n    S-CSCF->>P-CSCF: 183 Session Progress\n    P-CSCF->>UE: 183 Session Progress\n    UE->>P-CSCF: PRACK\n    S-CSCF->>P-CSCF: 180 Ringing\n    P-CSCF->>UE: 180 Ringing\n    Note over UE,P-CSCF: No 200 OK \u2192 caller CANCELs\n    UE->>P-CSCF: CANCEL\n    P-CSCF->>UE: 487 Request Terminated\n    UE->>P-CSCF: ACK"
+}

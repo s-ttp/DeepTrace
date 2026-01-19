@@ -1,0 +1,59 @@
+{
+  "network_overview": "The capture contains only two IP flows: a 3-packet TCP/80 exchange between private addresses and a single UDP packet between RFC-1918 space, with no 3GPP, IMS, or voice protocols present. No GTP, Diameter, PFCP, SIP, or RTP traffic is observable at this mirror point.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 50,
+  "health_status": "warning",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Single 3-packet TCP/80 burst (SYN-SYN/ACK-ACK) completed in 1.7 ms with no payload",
+      "severity": "info",
+      "evidence": "TCP flags [S, A, SA] between 192.168.1.1:1234 \u2192 192.168.1.2:80, 162 bytes total"
+    },
+    {
+      "category": "Transport",
+      "finding": "One 53-byte UDP packet sent from 10.0.0.1:5000 to 10.0.0.2:6000 with no reply captured",
+      "severity": "info",
+      "evidence": "UDP packet at 1768281044.21193 s, no return packet in capture"
+    }
+  ],
+  "root_causes": [],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Voice/IMS call existence",
+      "reason": "No SIP, RTP, or IMS protocols detected",
+      "additional_capture_needed": "Mirror on S1-U/S5-U or N3/N9 with GTP-U decapsulation to see user-plane RTP, or capture on P-CSCF interface for SIP"
+    },
+    {
+      "aspect": "Control-plane success/failure",
+      "reason": "No GTP-C, Diameter, PFCP, S1-AP, NGAP messages present",
+      "additional_capture_needed": "Capture on S1-MME, S5-C, N2, N4, or S6a interfaces"
+    },
+    {
+      "aspect": "Bearer establishment",
+      "reason": "No GTP tunnels or EBI information",
+      "additional_capture_needed": "GTP-C capture between MME-SGW or SGW-PGW"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Re-position capture point to include GTP-U or SIP interfaces if troubleshooting voice",
+      "rationale": "Current mirror only shows post-NAT IP traffic without 3GPP encapsulation or call signaling",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Collect longer time window to observe complete UDP transaction",
+      "rationale": "Only one direction of the UDP flow is present; cannot confirm bidirectional reachability",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Not observable (no SIP, Diameter, GTP-C, PFCP, S1-AP, NGAP detected)",
+    "user_plane_health": "Single TCP/80 handshake completed successfully; no user data transfer observed",
+    "voice_quality": "Not observable (no RTP or RTCP packets)",
+    "cross_plane_correlation": "No correlation possible\u2014only bare IP traffic present"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant A as 192.168.1.1:1234\n    participant B as 192.168.1.2:80\n    participant U as 10.0.0.1:5000\n    participant V as 10.0.0.2:6000\n    A->>B: TCP SYN\n    B->>A: TCP SYN-ACK\n    A->>B: TCP ACK\n    U->>V: UDP (53 bytes)"
+}

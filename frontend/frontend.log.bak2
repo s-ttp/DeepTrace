@@ -1,0 +1,88 @@
+
+> pcap-analyzer-frontend@1.0.0 start
+> react-scripts start
+
+(node:698427) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:698427) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+Starting the development server...
+
+Failed to compile.
+
+[eslint] 
+src/App.js
+Syntax error: Identifier 'ws' has already been declared. (75:10) (75:10)
+ERROR in ./src/App.js
+Module build failed (from ./node_modules/babel-loader/lib/index.js):
+SyntaxError: /home/sttp/pcap/frontend/src/App.js: Identifier 'ws' has already been declared. (75:10)
+
+  73 |     // Reverting to the logic that matches the backend location we know: localhost:8000 
+  74 |     // Since I am setting "proxy": "http://localhost:8000", the backend IS at localhost:8000.
+> 75 |     const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/${id}`);
+     |           ^
+  76 |
+  77 |     // NOTE: If the user is on a cloud IDE, they might not be able to connect to :8000 directly.
+  78 |     // They are seeing "Failed to fetch" which is HTTP. 
+    at constructor (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:367:19)
+    at FlowParserMixin.raise (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:6624:19)
+    at FlowScopeHandler.checkRedeclarationInScope (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:1646:19)
+    at FlowScopeHandler.declareName (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:1612:12)
+    at FlowScopeHandler.declareName (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:1713:11)
+    at FlowParserMixin.declareNameFromIdentifier (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:7594:16)
+    at FlowParserMixin.checkIdentifier (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:7590:12)
+    at FlowParserMixin.checkLVal (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:7527:12)
+    at FlowParserMixin.parseVarId (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13488:10)
+    at FlowParserMixin.parseVarId (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:3503:11)
+    at FlowParserMixin.parseVar (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13459:12)
+    at FlowParserMixin.parseVarStatement (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13306:10)
+    at FlowParserMixin.parseStatementContent (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12927:23)
+    at FlowParserMixin.parseStatementLike (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12843:17)
+    at FlowParserMixin.parseStatementLike (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:2945:24)
+    at FlowParserMixin.parseStatementListItem (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12823:17)
+    at FlowParserMixin.parseBlockOrModuleBlockBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13392:61)
+    at FlowParserMixin.parseBlockBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13385:10)
+    at FlowParserMixin.parseBlock (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13373:10)
+    at FlowParserMixin.parseFunctionBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12174:24)
+    at /home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:2919:63
+    at FlowParserMixin.forwardNoArrowParamsConversionAt (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:3095:16)
+    at FlowParserMixin.parseFunctionBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:2919:12)
+    at FlowParserMixin.parseArrowExpression (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12149:10)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:11759:12)
+    at FlowParserMixin.parseParenAndDistinguishExpression (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:3620:18)
+    at FlowParserMixin.parseExprAtom (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:11395:23)
+    at FlowParserMixin.parseExprAtom (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:4793:20)
+    at FlowParserMixin.parseExprSubscripts (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:11145:23)
+    at FlowParserMixin.parseUpdate (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:11130:21)
+    at FlowParserMixin.parseMaybeUnary (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:11110:23)
+    at FlowParserMixin.parseMaybeUnaryOrPrivate (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10963:61)
+    at FlowParserMixin.parseExprOps (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10968:23)
+    at FlowParserMixin.parseMaybeConditional (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10945:23)
+    at FlowParserMixin.parseMaybeAssign (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10895:21)
+    at FlowParserMixin.parseMaybeAssign (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:3578:18)
+    at /home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10864:39
+    at FlowParserMixin.allowInAnd (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12495:16)
+    at FlowParserMixin.parseMaybeAssignAllowIn (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:10864:17)
+    at FlowParserMixin.parseVar (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13460:91)
+    at FlowParserMixin.parseVarStatement (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13306:10)
+    at FlowParserMixin.parseStatementContent (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12927:23)
+    at FlowParserMixin.parseStatementLike (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12843:17)
+    at FlowParserMixin.parseStatementLike (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:2945:24)
+    at FlowParserMixin.parseStatementListItem (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12823:17)
+    at FlowParserMixin.parseBlockOrModuleBlockBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13392:61)
+    at FlowParserMixin.parseBlockBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13385:10)
+    at FlowParserMixin.parseBlock (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:13373:10)
+    at FlowParserMixin.parseFunctionBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:12174:24)
+    at FlowParserMixin.parseFunctionBody (/home/sttp/pcap/frontend/node_modules/@babel/parser/lib/index.js:2922:11)
+
+ERROR in [eslint] 
+src/App.js
+  Line 75:10:  Parsing error: Identifier 'ws' has already been declared. (75:10)
+
+webpack compiled with 2 errors
+Proxy error: Could not proxy request / from 34.18.131.28:3000 to http://localhost:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Proxy error: Could not proxy request /favicon.ico from 34.18.131.28:3000 to http://localhost:8000.
+See https://nodejs.org/api/errors.html#errors_common_system_errors for more information (ECONNREFUSED).
+
+Compiling...

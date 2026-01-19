@@ -1,0 +1,83 @@
+{
+  "network_overview": "The capture contains pure IMS SIP signalling for two parallel VoLTE/VoNR call attempts that both fail: the first pair is cancelled by the subscriber after ~26 s, the second pair times-out after <1 s. All four INVITEs receive 407 Proxy Authentication Required, indicating missing or invalid IMS AKA credentials, and none reach an answered state.",
+  "health_score": 25,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % of SIP INVITEs (8/8) rejected with 407; no 200 OK (INVITE) seen",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Zero calls completed; no RTP flows present \u2192 effective voice service outage",
+      "severity": "critical"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Call set-up delay healthy (<1 s to 180 Ringing) when auth succeeds on re-INVITE",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Early media (183 Session Progress) and ringing (180) arrived, showing bearer reserved",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "IMS Authentication Failure (SIP 407)",
+      "description": "Every initial INVITE is challenged with 407 Proxy Authentication Required and the subsequent INVITE carries no valid Security-Verify/Authorization headers, so the S-CSCF continues to reject. UE appears not to have run IMS AKA or the P-CSCF is not inserting proper credentials.",
+      "impact": "Complete prevention of VoLTE/VoNR call setup; subscribers cannot originate any voice/video call.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_5 Cause:Q.850;cause=21,SIP;cause=407",
+        "Tx:pkt_33 same cause",
+        "Calls 1-4 all show 407 before any progress"
+      ]
+    },
+    {
+      "issue": "Subscriber Cancellations & Setup Time-outs",
+      "description": "After authentication is bypassed on re-INVITE, calls stay in ringing state for ~25 s and are then CANCELled (cause 16) or time-out, indicating far-end no-answer or UE impatience rather than network failure.",
+      "impact": "Perceived call failure by end-user even when bearer is reserved; increases repeat attempts and signalling load.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "Call 1 CANCEL at 5316.794",
+        "Call 3 ends with INVITE_SETUP_TIMEOUT after 0.9 s"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check UE/USIM IMS AKA status: verify ISIM keys, SQN sync, and that P-CSCF address is correctly received in PCO/Protocol Configuration Options during EPS/5GS attach.",
+      "rationale": "Eliminates the 407 rejection root cause and allows normal IMS registration/calls.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Collect simultaneous P-CSCF/S-CSCF logs and compare Security-Verify headers; if missing, update P-CSCF config to insert proper credentials after AKA.",
+      "rationale": "Ensures the second INVITE satisfies the 407 challenge.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Review ringing timer (T301/T303) and MMTel AS configuration to reduce post-180 wait time and avoid user-abandoned calls.",
+      "rationale": "Lowers cancellation rate and improves user experience.",
+      "category": "Performance"
+    },
+    {
+      "priority": 4,
+      "action": "Enable SIP capture on Mb interface to confirm RTP bearer establishment and check for any bearer-level (GTP-U/QoS) issues that could delay alerting.",
+      "rationale": "Validates that data-plane is not contributing to late alerting.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Control-plane is responsive (sub-second 100/183/180) but authentication layer is broken (100 % 407 on first INVITE).",
+    "user_plane_health": "No RTP flows captured; however 183/180 indicate bearer was reserved, so user-plane likely set up but never used.",
+    "voice_quality": "No answered calls \u2192 no MOS/RTP metrics; from signalling, bearer appeared ready so quality would have been normal if call completed.",
+    "cross_plane_correlation": "SIP signalling shows successful QoS bearer activation (183 Session Progress) yet call is torn down before media starts; failure is purely signalling-layer (auth/answer) not transport."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    UE->>P-CSCF: INVITE (no auth)\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF-->>P-CSCF: 407 Proxy Authentication Required\n    P-CSCF-->>UE: 407\n    UE->>P-CSCF: ACK\n    Note over UE,S-CSCF: UE re-submits INVITE but 407 repeats\n    S-CSCF-->>UE: 180 Ringing\n    Note over UE,S-CSCF: ~25 s wait\n    UE->>S-CSCF: CANCEL (cause 16)\n    S-CSCF-->>UE: 487 Request Terminated\n    UE->>S-CSCF: ACK"
+}

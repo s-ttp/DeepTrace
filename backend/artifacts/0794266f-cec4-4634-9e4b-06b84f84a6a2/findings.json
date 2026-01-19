@@ -1,0 +1,45 @@
+{
+  "network_overview": "The capture shows a 4G-LTE core performing only control-plane keep-alive: S1-AP heartbeats between eNB and MME, GTP-C echo between S-GW and P-GW, and Diameter CCR/CCA with Result-Code 2001 (DIAMETER_SUCCESS). No user-plane GTP-U tunnels, no IMS/SIP, and no abnormal events are present.",
+  "health_score": 95,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "All procedures (Cmd-318/316/324, Proc-11/13/23) show 0 % \u2018success-rate\u2019 only because no response codes other than 2001 were seen; this is an artefact of the KPI script, not a failure.",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Zero SIP calls, zero RTP streams and zero IMS registrations; the network is data-only during the observed window.",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Lower the S1-AP SCTP heartbeat interval from the current ~10 s to 30 s on the MME to cut idle-signalling load by 65 %.",
+      "rationale": "The 27 NO-OP chunks in 11 min are unnecessary for a stable transport; 3GPP TS 36.413 allows 30 s.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 2,
+      "action": "Enable GTP-U echo-request on S-GW every 60 s and verify the P-GW replies to detect silent path failures before UE traffic starts.",
+      "rationale": "Capture shows GTP-C echo but no GTP-U path verification; proactive detection avoids bearer-setup failures later.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Collect a second capture during busy-hour with user-plane filters (ip.proto==47 or udp.port==2152) to baseline GTP-U latency and loss.",
+      "rationale": "Current trace is idle; a busy-hour baseline is required for future SLA comparisons.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "S1-AP, GTP-C and Diameter exchanges are 100 % successful (Result-Code 2001); SCTP associations remain stable for 11 min.",
+    "user_plane_health": "No GTP-U tunnels exist; user plane is idle.",
+    "voice_quality": "No IMS signalling or RTP detected; voice service is dormant.",
+    "cross_plane_correlation": "Control-plane keep-alive messages prove the path is ready, but absence of GTP-U CREATE-BEARER-REQ/RES means no user-plane context has been established yet."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant eNB as 10.233.39.38\n    participant MME as 10.47.19.6\n    participant SGW as 10.47.17.134\n    participant PGW as 10.47.17.115\n    participant PCRF as 10.47.9.68\n    loop every 30 s\n        eNB->>MME: S1-AP Heartbeat (Proc-11)\n        MME->>eNB: S1-AP Heartbeat ACK (Proc-13)\n    end\n    loop every 60 s\n        SGW->>PGW: GTP-C Echo Request\n        PGW->>SGW: GTP-C Echo Response\n    end\n    MME->>PCRF: Diameter CCR Cmd-318\n    PCRF->>MME: Diameter CCA Result-Code 2001\n    Note over MME,PCRF: Policy session successfully authorised"
+}

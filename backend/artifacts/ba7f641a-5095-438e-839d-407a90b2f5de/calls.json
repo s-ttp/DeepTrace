@@ -1,0 +1,698 @@
+[
+  {
+    "call_id": "mpikejikyhqht1wy4jqyiqtjphnthjpw@UAC",
+    "start_time": 1765805290.957,
+    "end_time": 1765805316.806,
+    "duration_sec": 25.849,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "CANCELLED",
+    "classification": "CANCELLED_BY_CALLER",
+    "messages": [
+      {
+        "time": 1765805290.957,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805290.957,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.005,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.027,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.05,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.05,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.63,
+        "type": "183 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.674,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.912,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.912,
+        "type": "180 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.794,
+        "type": "CANCEL",
+        "code": "Q.850;cause=16;text=normal call clearing\"\"",
+        "method": "CANCEL",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.794,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.794,
+        "type": "487 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.806,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      }
+    ],
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "ua": null,
+    "timing": {
+      "invite_time": 1765805290.957,
+      "first_provisional_time": null,
+      "ringing_time": null,
+      "session_progress_time": null,
+      "ok_time": null,
+      "bye_time": null,
+      "cancel_time": 1765805316.794,
+      "last_refresh_time": null,
+      "refer_time": null
+    },
+    "kpis": {},
+    "session_timer": {
+      "session_expires": null,
+      "min_se": null,
+      "refresher": null,
+      "is_expired": false
+    },
+    "transfer": {
+      "is_transfer": false,
+      "refer_to": null,
+      "referred_by": null,
+      "transfer_status": null,
+      "notify_responses": []
+    },
+    "reason_header": null,
+    "msg_count": 14
+  },
+  {
+    "call_id": "asbcmpikejikyhqht1wy4jqyiqtjphnthjpw@UAC",
+    "start_time": 1765805290.971,
+    "end_time": 1765805316.813,
+    "duration_sec": 25.842,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "CANCELLED",
+    "classification": "CANCELLED_BY_CALLER",
+    "messages": [
+      {
+        "time": 1765805290.971,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805290.99,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.004,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.004,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.071,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.096,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.612,
+        "type": "183 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.675,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.911,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805291.912,
+        "type": "180 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.795,
+        "type": "CANCEL",
+        "code": "Q.850;cause=16;text=normal call clearing\"\"",
+        "method": "CANCEL",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.811,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.813,
+        "type": "487 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805316.813,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      }
+    ],
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.117",
+    "ua": null,
+    "timing": {
+      "invite_time": 1765805290.971,
+      "first_provisional_time": null,
+      "ringing_time": null,
+      "session_progress_time": null,
+      "ok_time": null,
+      "bye_time": null,
+      "cancel_time": 1765805316.795,
+      "last_refresh_time": null,
+      "refer_time": null
+    },
+    "kpis": {},
+    "session_timer": {
+      "session_expires": null,
+      "min_se": null,
+      "refresher": null,
+      "is_expired": false
+    },
+    "transfer": {
+      "is_transfer": false,
+      "refer_to": null,
+      "referred_by": null,
+      "transfer_status": null,
+      "notify_responses": []
+    },
+    "reason_header": null,
+    "msg_count": 14
+  },
+  {
+    "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC",
+    "start_time": 1765805409.811,
+    "end_time": 1765805410.746,
+    "duration_sec": 0.935,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "INVITE_SETUP_TIMEOUT",
+    "classification": "INVITE_TIMEOUT",
+    "messages": [
+      {
+        "time": 1765805409.811,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.811,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.862,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.882,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.907,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.907,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.454,
+        "type": "183 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.495,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.734,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.746,
+        "type": "180 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      }
+    ],
+    "src_ip": "10.235.67.3",
+    "dst_ip": "10.174.14.138",
+    "ua": null,
+    "timing": {
+      "invite_time": 1765805409.811,
+      "first_provisional_time": null,
+      "ringing_time": null,
+      "session_progress_time": null,
+      "ok_time": null,
+      "bye_time": null,
+      "cancel_time": null,
+      "last_refresh_time": null,
+      "refer_time": null
+    },
+    "kpis": {},
+    "session_timer": {
+      "session_expires": null,
+      "min_se": null,
+      "refresher": null,
+      "is_expired": false
+    },
+    "transfer": {
+      "is_transfer": false,
+      "refer_to": null,
+      "referred_by": null,
+      "transfer_status": null,
+      "notify_responses": []
+    },
+    "reason_header": null,
+    "msg_count": 10
+  },
+  {
+    "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC",
+    "start_time": 1765805409.821,
+    "end_time": 1765805410.745,
+    "duration_sec": 0.924,
+    "state": "FAILED",
+    "method": "INVITE",
+    "end_reason": "INVITE_SETUP_TIMEOUT",
+    "classification": "INVITE_TIMEOUT",
+    "messages": [
+      {
+        "time": 1765805409.821,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.852,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.861,
+        "type": "407 Response",
+        "code": "Q.850;cause=21,SIP;cause=407",
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.861,
+        "type": "ACK",
+        "code": null,
+        "method": "ACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.916,
+        "type": "INVITE",
+        "code": null,
+        "method": "INVITE",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805409.94,
+        "type": "100 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.436,
+        "type": "183 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.495,
+        "type": "PRACK",
+        "code": null,
+        "method": "PRACK",
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.734,
+        "type": "200 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      },
+      {
+        "time": 1765805410.745,
+        "type": "180 Response",
+        "code": null,
+        "method": null,
+        "sip_headers": {
+          "session_expires": null,
+          "refer_to": null,
+          "event": null
+        }
+      }
+    ],
+    "src_ip": "10.174.14.5",
+    "dst_ip": "10.174.13.115",
+    "ua": null,
+    "timing": {
+      "invite_time": 1765805409.821,
+      "first_provisional_time": null,
+      "ringing_time": null,
+      "session_progress_time": null,
+      "ok_time": null,
+      "bye_time": null,
+      "cancel_time": null,
+      "last_refresh_time": null,
+      "refer_time": null
+    },
+    "kpis": {},
+    "session_timer": {
+      "session_expires": null,
+      "min_se": null,
+      "refresher": null,
+      "is_expired": false
+    },
+    "transfer": {
+      "is_transfer": false,
+      "refer_to": null,
+      "referred_by": null,
+      "transfer_status": null,
+      "notify_responses": []
+    },
+    "reason_header": null,
+    "msg_count": 10
+  }
+]

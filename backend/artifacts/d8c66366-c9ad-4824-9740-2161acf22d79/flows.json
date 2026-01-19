@@ -1,0 +1,45 @@
+[
+  {
+    "packet_count": 3,
+    "total_bytes": 162,
+    "tcp_flags": [
+      "SA",
+      "S",
+      "A"
+    ],
+    "analysis_events": [],
+    "src_ip": "192.168.1.1",
+    "dst_ip": "192.168.1.2",
+    "src_port": 1234,
+    "dst_port": 80,
+    "transport": "TCP",
+    "duration": 0.0017058849334716797,
+    "start_time": 1768281044.20964,
+    "end_time": 1768281044.211346,
+    "pps": 1758.62,
+    "protocol": "HTTP",
+    "technology": "Unknown",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "Unknown"
+  },
+  {
+    "packet_count": 1,
+    "total_bytes": 53,
+    "analysis_events": [],
+    "src_ip": "10.0.0.1",
+    "dst_ip": "10.0.0.2",
+    "src_port": 5000,
+    "dst_port": 6000,
+    "transport": "UDP",
+    "duration": 0.0,
+    "start_time": 1768281044.21193,
+    "end_time": 1768281044.21193,
+    "pps": 1,
+    "protocol": "UDP",
+    "technology": "Unknown",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "Unknown"
+  }
+]

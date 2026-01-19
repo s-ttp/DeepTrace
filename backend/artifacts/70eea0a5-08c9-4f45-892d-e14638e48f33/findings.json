@@ -1,0 +1,50 @@
+{
+  "network_overview": "The capture contains a single IMS/SIP registration exchange (REGISTER-100-200) over SCTP between UE 10.235.69.1 and P-CSCF 10.235.68.66; no voice call was attempted and no RTP/media streams are present. All SIP transactions completed successfully within 129 ms, so the apparent \"FAILED\" and \"SETUP_TIMEOUT\" labels in the JSON are false positives caused by the analytics tool mis-classifying a registration-only trace as a call attempt.",
+  "health_score": 95,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Only 5 packets exchanged: pure IMS signalling, zero user-plane traffic;\u5b8c\u5168\u7b26\u5408\u5f00\u673a\u540e\u9996\u6b21IMS\u6ce8\u518c\u573a\u666f",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No INVITE, no BYE, no RTP; therefore no voice path established and no quality metrics to evaluate",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Misleading analytics classification",
+      "description": "The VOICE & IMS ANALYSIS engine tagged the REGISTER transaction as a 'FAILED call' with 'SETUP_TIMEOUT', but no INVITE was ever sent; this is a registration-only flow that actually succeeded (200 OK received).",
+      "impact": "May trigger false alarms in SOC/NOC dashboards and waste troubleshooting effort.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Call:asbceZEju3CCRNYig4DeNCKV71rE (state=FAILED,end_reason=SETUP_TIMEOUT)",
+        "Tx:pkt_5 (200 OK)"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Filter analytics to classify only INVITE-initiated dialogs as 'calls'; treat stand-alone REGISTER as 'IMS-Reg' success/failure.",
+      "rationale": "Eliminates false positives and keeps KPIs aligned with 3GPP definition of call setup success.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Enable periodic RTP-path probing (e.g., OPTIONS ping) to pre-verify firewall/NAT rules before first call.",
+      "rationale": "Ensures media ports are open so first call will not fail for user-plane reasons.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP/SCTP registration completed in 129 ms with no retransmissions or error codes; control plane healthy.",
+    "user_plane_health": "No GTP bearers observed; UE likely still in idle mode or default bearer only.",
+    "voice_quality": "No RTP streams present; voice quality not applicable for this registration-only sample.",
+    "cross_plane_correlation": "Signaling plane ready; when UE later sends INVITE the same SCTP association will be reused, so bearer setup latency should be minimal."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE as 10.235.69.1:6606\n    participant P as P-CSCF 10.235.68.66:5060\n    Note over UE,P: VoLTE IMS registration (no call)\n    UE->>P: REGISTER sip:ims.mnc001.mcc001.3gppnetwork.org\n    P-->>UE: 100 Trying\n    P-->>UE: 200 OK (expires=3600)\n    Note over UE,P: Registration successful, ready for calls"
+}

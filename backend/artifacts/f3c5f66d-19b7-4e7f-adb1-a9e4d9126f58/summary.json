@@ -1,0 +1,15 @@
+{
+  "total_flows": 10,
+  "total_packets": 112,
+  "total_bytes": 29356,
+  "protocols": [
+    "S1-AP/X2-AP",
+    "SCTP",
+    "Diameter",
+    "DNS",
+    "GTP-C"
+  ],
+  "duration": 683.5019319057465,
+  "start_time": 1752129502.741995,
+  "end_time": 1752130186.243927
+}

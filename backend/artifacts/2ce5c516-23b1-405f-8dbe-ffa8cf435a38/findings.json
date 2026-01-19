@@ -1,0 +1,36 @@
+{
+  "network_overview": "Analysis could not be completed: Error code: 400 - {'error': {'message': \"Missing required parameter: 'tools[0].name'.\", 'type': 'invalid_request_error', 'param': 'tools[0].name', 'code': 'missing_required_parameter'}}",
+  "health_score": 0,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Error",
+      "finding": "LLM API error: Error code: 400 - {'error': {'message': \"Missing required parameter: 'tools[0].name'.\", 'type': 'invalid_request_error', 'param': 'tools[0].name', 'code': 'missing_required_parameter'}}",
+      "severity": "critical"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "API Error",
+      "description": "Error code: 400 - {'error': {'message': \"Missing required parameter: 'tools[0].name'.\", 'type': 'invalid_request_error', 'param': 'tools[0].name', 'code': 'missing_required_parameter'}}",
+      "impact": "Analysis unavailable",
+      "confidence_pct": 0,
+      "confidence_level": "LOW",
+      "confidence_justification": "Unable to analyze due to API error"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check LLM API configuration",
+      "rationale": "API connectivity issue",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Unknown",
+    "user_plane_health": "Unknown",
+    "cross_plane_correlation": "Unknown"
+  },
+  "sequence_diagram": ""
+}

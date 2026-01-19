@@ -1,0 +1,45 @@
+{
+  "network_overview": "The 130 ms capture shows a single successful VoLTE IMS registration (SIP REGISTER-100-200) between P-CSCF 10.235.69.1 and S-CSCF 10.235.68.66; no bearer or media traffic is present.",
+  "health_score": 100,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Only 5 packets in 130 ms, all SIP signaling; zero RTP or GTP-U indicates idle UE post-registration",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No media streams present; registration completed with 12 ms RTT (100-200), well within 3GPP <200 ms IMS delay budget",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Enable SIP OPTIONS ping from S-CSCF toward registered UE to verify NAT/firewall pin-hole remains open",
+      "rationale": "Prevents 408/Request Timeout on first outbound call when NAT binding times out before T1 expires",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Set SIP Timer T1 = 500 ms and T2 = 4 s on P-CSCF to match LAN RTT <20 ms and reduce retransmission waste",
+      "rationale": "Current defaults (T1=500 ms) are conservative for sub-millisecond core network; tuning cuts setup delay by ~200 ms on every call",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Collect QoS counters (PDR/URR) on Sx interface to confirm QCI=5 bearer is established even when GTP-U is absent in mirror",
+      "rationale": "Ensures IMS signaling EPS bearer is correctly reserved and policed, avoiding silent registration drops",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "REGISTER transaction completed successfully; no 3xx/4xx/5xx responses, no retransmissions, SCTP association stable",
+    "user_plane_health": "No GTP or RTP detected; expected for registration-only trace",
+    "voice_quality": "N/A \u2013 no media plane established",
+    "cross_plane_correlation": "Control-plane only; bearer establishment (GTP-C/Sx) occurs before SIP REGISTER but is not mirrored in this capture"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF as \"P-CSCF\\n10.235.69.1:6606\"\n    participant S-CSCF as \"S-CSCF\\n10.235.68.66:5060\"\n    UE->>P-CSCF: SIP REGISTER\n    P-CSCF->>S-CSCF: SIP REGISTER (Call-ID: asbceZEju3CCRNYig4DeNCKV71rE)\n    S-CSCF->>P-CSCF: 100 Trying\n    P-CSCF->>UE: 100 Trying\n    S-CSCF->>P-CSCF: 200 OK (registration success)\n    P-CSCF->>UE: 200 OK\n    Note over UE,S-CSCF: UE now IMS-registered, ready for VoLTE call"
+}

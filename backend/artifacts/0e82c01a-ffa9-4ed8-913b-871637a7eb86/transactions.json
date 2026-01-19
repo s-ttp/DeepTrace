@@ -1,0 +1,236 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1654758616.9844587,
+      "src_ip": "86.62.214.55",
+      "dst_ip": "10.47.17.114",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 186,
+      "info": "GTP 16",
+      "gtp_teid": 0,
+      "gtp_type": 16
+    },
+    {
+      "timestamp": 1654758616.9849977,
+      "src_ip": "10.47.22.58",
+      "dst_ip": "10.47.22.22",
+      "src_port": 65349,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 928,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.0246315,
+      "src_ip": "10.47.22.22",
+      "dst_ip": "10.47.22.58",
+      "src_port": 3868,
+      "dst_port": 65349,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 716,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.0250437,
+      "src_ip": "10.47.27.65",
+      "dst_ip": "10.47.9.86",
+      "src_port": 65351,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 868,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.0350554,
+      "src_ip": "10.47.9.86",
+      "dst_ip": "10.47.27.65",
+      "src_port": 3868,
+      "dst_port": 65351,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 276,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.0353308,
+      "src_ip": "10.47.22.58",
+      "dst_ip": "10.47.22.22",
+      "src_port": 65349,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 444,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.0497246,
+      "src_ip": "10.47.22.22",
+      "dst_ip": "10.47.22.58",
+      "src_port": 3868,
+      "dst_port": 65349,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 344,
+      "info": ""
+    },
+    {
+      "timestamp": 1654758617.049797,
+      "src_ip": "10.47.17.114",
+      "dst_ip": "86.62.214.55",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 48,
+      "info": "GTP 17 TEID:3023713083",
+      "gtp_teid": 3023713083,
+      "gtp_type": 17
+    }
+  ],
+  "deep_transactions": [
+    {
+      "tx_id": "pkt_1",
+      "timestamp": 1654758616.9844587,
+      "frame_number": 1,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x10",
+      "cause": null,
+      "session_ids": {
+        "teid": "0x00000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "86.62.214.55",
+      "_dst": "10.47.17.114",
+      "_teid": "0x00000000",
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_2",
+      "timestamp": 1654758616.9849977,
+      "frame_number": 2,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": null,
+      "session_ids": {
+        "session_id": "mscp02.cmg01;3ab51338;62a19cd8;427012937268094-14db0830"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.22.58",
+      "_dst": "10.47.22.22",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_3",
+      "timestamp": 1654758617.0246315,
+      "frame_number": 3,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": "2001",
+      "session_ids": {
+        "session_id": "mscp02.cmg01;3ab51338;62a19cd8;427012937268094-14db0830"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.22.22",
+      "_dst": "10.47.22.58",
+      "_teid": null,
+      "_seid": null,
+      "cause_label": "DIAMETER_SUCCESS",
+      "cause_mapped": {
+        "code": 2001,
+        "label": "DIAMETER_SUCCESS",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "Diameter"
+      }
+    },
+    {
+      "tx_id": "pkt_4",
+      "timestamp": 1654758617.0250437,
+      "frame_number": 4,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": null,
+      "session_ids": {
+        "session_id": "cmg01;017d48eb;62a19cd9;427012937268094-14db0835"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.27.65",
+      "_dst": "10.47.9.86",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_5",
+      "timestamp": 1654758617.0350554,
+      "frame_number": 5,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": "4010",
+      "session_ids": {
+        "session_id": "cmg01;017d48eb;62a19cd9;427012937268094-14db0835"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.9.86",
+      "_dst": "10.47.27.65",
+      "_teid": null,
+      "_seid": null,
+      "cause_label": "DIAMETER_END_USER_SERVICE_DENIED",
+      "cause_mapped": {
+        "code": 4010,
+        "label": "DIAMETER_END_USER_SERVICE_DENIED",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "Diameter"
+      }
+    },
+    {
+      "tx_id": "pkt_8",
+      "timestamp": 1654758617.049797,
+      "frame_number": 8,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x11",
+      "cause": "209",
+      "session_ids": {
+        "teid": "0xb43a333b"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.17.114",
+      "_dst": "86.62.214.55",
+      "_teid": "0xb43a333b",
+      "_seid": null,
+      "cause_label": "UNMAPPED(209)",
+      "cause_mapped": {
+        "code": 209,
+        "label": "UNMAPPED(209)",
+        "source": "unmapped",
+        "is_mapped": false,
+        "protocol": "GTPv2-C"
+      }
+    }
+  ],
+  "voice_analysis": {
+    "trace_type": "EMPTY_OR_UNKNOWN",
+    "calls": [],
+    "registrations": [],
+    "findings": []
+  }
+}

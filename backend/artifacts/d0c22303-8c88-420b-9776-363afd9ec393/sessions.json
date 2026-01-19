@@ -1,0 +1,95 @@
+[
+  {
+    "session_key": "5g:5g_pfcp_session:1",
+    "generation": "5G",
+    "type": "5G PFCP Session",
+    "description": "Packet Forwarding Control Protocol (N4 interface)",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 4682,
+      "byte_count": 891036,
+      "flow_count": 1
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "4g:diameter_session:10",
+    "generation": "4G",
+    "type": "Diameter Session",
+    "description": "Diameter signaling (Gx/Gy/S6a/Rx interfaces)",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 1970,
+      "byte_count": 1201708,
+      "flow_count": 10
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "5g:gtp-u_tunnel:2",
+    "generation": "5G",
+    "type": "GTP-U Tunnel",
+    "description": "GPRS Tunneling Protocol - User Plane",
+    "identifiers": {
+      "teids": [
+        29485312,
+        3155476866,
+        2218445576,
+        558369168,
+        123720080,
+        1027018000,
+        2888179859,
+        2955601940,
+        639361808,
+        2887283232
+      ]
+    },
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 102,
+      "byte_count": 14236,
+      "flow_count": 2
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "4g:gtp-c_session:4",
+    "generation": "4G",
+    "type": "GTP-C Session",
+    "description": "GPRS Tunneling Protocol - Control Plane",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 2183,
+      "byte_count": 267771,
+      "flow_count": 4
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  },
+  {
+    "session_key": "unknown:radius_session:125",
+    "generation": "Unknown",
+    "type": "RADIUS Session",
+    "description": "Authentication, Authorization, Accounting",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 784,
+      "byte_count": 332822,
+      "flow_count": 125
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  }
+]

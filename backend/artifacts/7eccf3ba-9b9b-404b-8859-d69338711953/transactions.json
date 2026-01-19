@@ -1,0 +1,734 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1697719684.9876096,
+      "src_ip": "10.47.145.231",
+      "dst_ip": "10.47.145.114",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 48,
+      "info": "GTP 20 TEID:6029584",
+      "gtp_teid": 6029584,
+      "gtp_type": 20
+    },
+    {
+      "timestamp": 1697719684.9877644,
+      "src_ip": "10.47.145.117",
+      "dst_ip": "10.130.9.119",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 48,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719684.9878323,
+      "src_ip": "10.47.145.114",
+      "dst_ip": "10.47.145.231",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 46,
+      "info": "GTP 21 TEID:2181038996",
+      "gtp_teid": 2181038996,
+      "gtp_type": 21
+    },
+    {
+      "timestamp": 1697719685.0575454,
+      "src_ip": "10.130.9.119",
+      "dst_ip": "10.47.145.117",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 53,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1575494,
+      "src_ip": "10.47.145.134",
+      "dst_ip": "10.47.145.115",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 334,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1583421,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 852,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1676185,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1679258,
+      "src_ip": "10.47.145.117",
+      "dst_ip": "10.130.9.119",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 1146,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1875544,
+      "src_ip": "10.130.9.119",
+      "dst_ip": "10.47.145.117",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 84,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1877124,
+      "src_ip": "10.47.145.115",
+      "dst_ip": "10.47.145.134",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 55,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1877706,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 908,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719688.1976054,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4775202,
+      "src_ip": "10.47.145.134",
+      "dst_ip": "10.47.145.115",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 334,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.478239,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 852,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4876058,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4878926,
+      "src_ip": "10.47.145.117",
+      "dst_ip": "10.130.9.119",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 1146,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4896972,
+      "src_ip": "10.130.9.119",
+      "dst_ip": "10.47.145.117",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 84,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4898536,
+      "src_ip": "10.47.145.115",
+      "dst_ip": "10.47.145.134",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 55,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.4898932,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 908,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719698.497694,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.7906954,
+      "src_ip": "10.47.145.134",
+      "dst_ip": "10.47.145.115",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 334,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.7914355,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 852,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.7976377,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.7979476,
+      "src_ip": "10.47.145.117",
+      "dst_ip": "10.130.9.119",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 1146,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.8075771,
+      "src_ip": "10.130.9.119",
+      "dst_ip": "10.47.145.117",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 84,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.8077352,
+      "src_ip": "10.47.145.115",
+      "dst_ip": "10.47.145.134",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 55,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.8077826,
+      "src_ip": "10.47.139.82",
+      "dst_ip": "10.47.137.86",
+      "src_port": 65411,
+      "dst_port": 3868,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 908,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719708.8175876,
+      "src_ip": "10.47.137.86",
+      "dst_ip": "10.47.139.82",
+      "src_port": 3868,
+      "dst_port": 65411,
+      "protocol": "Diameter",
+      "transport": "TCP",
+      "length": 248,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719712.797625,
+      "src_ip": "10.47.145.231",
+      "dst_ip": "10.47.145.114",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 210,
+      "info": "GTP 16",
+      "gtp_teid": 0,
+      "gtp_type": 16
+    },
+    {
+      "timestamp": 1697719712.7982283,
+      "src_ip": "10.47.145.117",
+      "dst_ip": "10.130.9.119",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 714,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719712.8175104,
+      "src_ip": "10.130.9.119",
+      "dst_ip": "10.47.145.117",
+      "src_port": 8805,
+      "dst_port": 8805,
+      "protocol": "PFCP",
+      "transport": "UDP",
+      "length": 152,
+      "info": ""
+    },
+    {
+      "timestamp": 1697719712.8176448,
+      "src_ip": "10.47.145.114",
+      "dst_ip": "10.47.145.231",
+      "src_port": 2123,
+      "dst_port": 2123,
+      "protocol": "GTP-C",
+      "transport": "UDP",
+      "length": 190,
+      "info": "GTP 17 TEID:2182087464",
+      "gtp_teid": 2182087464,
+      "gtp_type": 17
+    }
+  ],
+  "deep_transactions": [
+    {
+      "tx_id": "pkt_1",
+      "timestamp": 1697719684.9876096,
+      "frame_number": 1,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x14",
+      "cause": null,
+      "session_ids": {
+        "teid": "0x005c0110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.145.231",
+      "_dst": "10.47.145.114",
+      "_teid": "0x005c0110",
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_2",
+      "timestamp": 1697719684.9877644,
+      "frame_number": 2,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-54",
+      "cause": null,
+      "session_ids": {
+        "seid": "0x00000000005a0130"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852493",
+      "_src": "10.47.145.117",
+      "_dst": "10.130.9.119",
+      "_teid": null,
+      "_seid": "0x00000000005a0130",
+      "type": "request",
+      "status": "no_response"
+    },
+    {
+      "tx_id": "pkt_3",
+      "timestamp": 1697719684.9878323,
+      "frame_number": 3,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x15",
+      "cause": "128",
+      "session_ids": {
+        "teid": "0x82000394"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.145.114",
+      "_dst": "10.47.145.231",
+      "_teid": "0x82000394",
+      "_seid": null,
+      "cause_label": "S1-U Path Failure",
+      "cause_mapped": {
+        "code": 128,
+        "label": "S1-U Path Failure",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "GTPv2-C"
+      }
+    },
+    {
+      "tx_id": "pkt_4",
+      "timestamp": 1697719685.0575454,
+      "frame_number": 4,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-55",
+      "cause": "1",
+      "session_ids": {
+        "seid": "0x00000000005c0110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852493",
+      "_src": "10.130.9.119",
+      "_dst": "10.47.145.117",
+      "_teid": null,
+      "_seid": "0x00000000005c0110",
+      "cause_label": "Request accepted(success)",
+      "cause_mapped": {
+        "code": 1,
+        "label": "Request accepted(success)",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "PFCP"
+      }
+    },
+    {
+      "tx_id": "pkt_6",
+      "timestamp": 1697719688.1583421,
+      "frame_number": 6,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": null,
+      "session_ids": {
+        "session_id": "cmg01;096ea8d2;65312588;427012938581585-005d0115"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.139.82",
+      "_dst": "10.47.137.86",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_7",
+      "timestamp": 1697719688.1676185,
+      "frame_number": 7,
+      "protocol": "Diameter",
+      "message_type": "Cmd-272",
+      "cause": "2001",
+      "session_ids": {
+        "session_id": "cmg01;096ea8d2;65312588;427012938581585-005d0115"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.137.86",
+      "_dst": "10.47.139.82",
+      "_teid": null,
+      "_seid": null,
+      "cause_label": "DIAMETER_SUCCESS",
+      "cause_mapped": {
+        "code": 2001,
+        "label": "DIAMETER_SUCCESS",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "Diameter"
+      }
+    },
+    {
+      "tx_id": "pkt_8",
+      "timestamp": 1697719688.1679258,
+      "frame_number": 8,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-50",
+      "cause": null,
+      "session_ids": {
+        "seid": "0x0000000000000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852494",
+      "_src": "10.47.145.117",
+      "_dst": "10.130.9.119",
+      "_teid": null,
+      "_seid": "0x0000000000000000",
+      "type": "request",
+      "status": "no_response"
+    },
+    {
+      "tx_id": "pkt_9",
+      "timestamp": 1697719688.1875544,
+      "frame_number": 9,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-51",
+      "cause": "73",
+      "session_ids": {
+        "seid": "0x00000000005d0110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852494",
+      "_src": "10.130.9.119",
+      "_dst": "10.47.145.117",
+      "_teid": null,
+      "_seid": "0x00000000005d0110",
+      "cause_label": "Rule creation / modification Failure",
+      "cause_mapped": {
+        "code": 73,
+        "label": "Rule creation / modification Failure",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "PFCP"
+      }
+    },
+    {
+      "tx_id": "pkt_16",
+      "timestamp": 1697719698.4878926,
+      "frame_number": 16,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-50",
+      "cause": null,
+      "session_ids": {
+        "seid": "0x0000000000000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852495",
+      "_src": "10.47.145.117",
+      "_dst": "10.130.9.119",
+      "_teid": null,
+      "_seid": "0x0000000000000000",
+      "type": "request",
+      "status": "no_response"
+    },
+    {
+      "tx_id": "pkt_17",
+      "timestamp": 1697719698.4896972,
+      "frame_number": 17,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-51",
+      "cause": "73",
+      "session_ids": {
+        "seid": "0x00000000005e0110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852495",
+      "_src": "10.130.9.119",
+      "_dst": "10.47.145.117",
+      "_teid": null,
+      "_seid": "0x00000000005e0110",
+      "cause_label": "Rule creation / modification Failure",
+      "cause_mapped": {
+        "code": 73,
+        "label": "Rule creation / modification Failure",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "PFCP"
+      }
+    },
+    {
+      "tx_id": "pkt_24",
+      "timestamp": 1697719708.7979476,
+      "frame_number": 24,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-50",
+      "cause": null,
+      "session_ids": {
+        "seid": "0x0000000000000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852496",
+      "_src": "10.47.145.117",
+      "_dst": "10.130.9.119",
+      "_teid": null,
+      "_seid": "0x0000000000000000",
+      "type": "request",
+      "status": "no_response"
+    },
+    {
+      "tx_id": "pkt_25",
+      "timestamp": 1697719708.8075771,
+      "frame_number": 25,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-51",
+      "cause": "73",
+      "session_ids": {
+        "seid": "0x00000000005f0110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852496",
+      "_src": "10.130.9.119",
+      "_dst": "10.47.145.117",
+      "_teid": null,
+      "_seid": "0x00000000005f0110",
+      "cause_label": "Rule creation / modification Failure",
+      "cause_mapped": {
+        "code": 73,
+        "label": "Rule creation / modification Failure",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "PFCP"
+      }
+    },
+    {
+      "tx_id": "pkt_29",
+      "timestamp": 1697719712.797625,
+      "frame_number": 29,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x10",
+      "cause": null,
+      "session_ids": {
+        "teid": "0x00000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.145.231",
+      "_dst": "10.47.145.114",
+      "_teid": "0x00000000",
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_30",
+      "timestamp": 1697719712.7982283,
+      "frame_number": 30,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-50",
+      "cause": null,
+      "session_ids": {
+        "seid": "0x0000000000000000"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852497",
+      "_src": "10.47.145.117",
+      "_dst": "10.130.9.119",
+      "_teid": null,
+      "_seid": "0x0000000000000000",
+      "type": "request",
+      "status": "no_response"
+    },
+    {
+      "tx_id": "pkt_31",
+      "timestamp": 1697719712.8175104,
+      "frame_number": 31,
+      "protocol": "PFCP",
+      "message_type": "PFCP-Msg-51",
+      "cause": "1",
+      "session_ids": {
+        "seid": "0x0000000000600110"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": "852497",
+      "_src": "10.130.9.119",
+      "_dst": "10.47.145.117",
+      "_teid": null,
+      "_seid": "0x0000000000600110",
+      "cause_label": "Request accepted(success)",
+      "cause_mapped": {
+        "code": 1,
+        "label": "Request accepted(success)",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "PFCP"
+      }
+    },
+    {
+      "tx_id": "pkt_32",
+      "timestamp": 1697719712.8176448,
+      "frame_number": 32,
+      "protocol": "GTPv2-C",
+      "message_type": "GTP-Msg-0x11",
+      "cause": "128",
+      "session_ids": {
+        "teid": "0x82100328"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.47.145.114",
+      "_dst": "10.47.145.231",
+      "_teid": "0x82100328",
+      "_seid": null,
+      "cause_label": "S1-U Path Failure",
+      "cause_mapped": {
+        "code": 128,
+        "label": "S1-U Path Failure",
+        "source": "wireshark",
+        "is_mapped": true,
+        "protocol": "GTPv2-C"
+      }
+    }
+  ],
+  "voice_analysis": {
+    "trace_type": "EMPTY_OR_UNKNOWN",
+    "calls": [],
+    "registrations": [],
+    "findings": []
+  }
+}

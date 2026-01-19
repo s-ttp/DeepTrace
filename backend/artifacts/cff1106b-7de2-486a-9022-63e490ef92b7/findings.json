@@ -1,0 +1,83 @@
+{
+  "network_overview": "The capture contains only IMS/SIP signaling for VoLTE/VoNR calls; every call leg is eventually cancelled or times out, so no bearer/RTP is established and no user-plane traffic is present. All 20 calls fail with the same pattern: INVITE \u2192 183/180 \u2192 CANCEL/BYE, indicating a common upstream trigger (user rejection or network timeout).",
+  "health_score": 35,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % of 33 INVITE attempts end in CANCEL or BYE; zero successful 200 OK for INVITE.",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No RTP flows detected \u2013 media bearer never established, so voice service is effectively unavailable.",
+      "severity": "critical"
+    },
+    {
+      "category": "Signalling Latency",
+      "finding": "PRACK and UPDATE round-trip times inside the core are < 200 ms, so transport delay is not the root cause.",
+      "severity": "info"
+    },
+    {
+      "category": "Protocol Consistency",
+      "finding": "Every CANCEL carries exactly the same reason text 'Call Rejected By User' (SIP cause=200), pointing to a single policy or timer.",
+      "severity": "warning"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "User-triggered CANCEL after alerting",
+      "description": "After 180 Ringing is sent the calling UE (or network on its behalf) sends CANCEL with cause 200; this is either a real user pressing 'End' or a handset/IMS-app timer expiring because no human input was detected.",
+      "impact": "Zero completed calls; subscribers cannot originate voice calls.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_35 (CANCEL cause=200)",
+        "Call:1eEeXOyORCYzPJN6BcinNvKt",
+        "Call:asbc1eEeXOyORCYzPJN6BcinNvKt"
+      ]
+    },
+    {
+      "issue": "INVITE-setup timer expiry on long legs",
+      "description": "Four calls (call_ids M3hLVREVD5ydTfb0VA0EWIeM, ffll43qaga4q76d36gy4344yyw4g0ggl, xyess5xlhwlem643336lll43nhwr5sxi, asbcxyess5xlhwlem643336lll43nhwr5sxi) receive no final 200 OK and are torn down with BYE containing internal reason '0132.0001.0B2E', indicating an S-CSCF or MMTEL guard timer (\u2248 6 min) expired.",
+      "impact": "Calls drop before answer; perceived as network failure.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_262 (BYE reason=0132.0001.0B2E)",
+        "Call:ffll43qaga4q76d36gy4344yyw4g0ggl duration 859 s"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check T9 (calling-party alerting) timer in MMTEL/AS and reduce it to \u2264 60 s to force earlier CANCEL instead of 6-minute BYE.",
+      "rationale": "Short timer avoids long hung sessions and releases radio bearers faster.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Verify that 180 Ringing is reliably played/heard by the calling UE; if ring-back tone is missing users hang up within 30 s.",
+      "rationale": "Human behaviour drives the CANCEL; ensure early-media or local ring-back is working.",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Collect simultaneous RAN trace (S1-MME/NGAP) to confirm radio bearer establishment for QCI=1 and check if RRC Connection Reconfiguration completes.",
+      "rationale": "Bearer failure would prevent alerting and correlate with the timeout BYE.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 4,
+      "action": "Audit IMS registration (REGISTER/200 OK) for the affected P-CSCF pool; missing contact or expired registration can cause AS to reject 200 OK.",
+      "rationale": "Hidden registration issues can block final answer even when alerting succeeds.",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP transactions complete normally up to 180 Ringing; no 5xx or re-transmissions, SCTP transport is stable.",
+    "user_plane_health": "No RTP flows detected \u2013 bearer either never requested or never confirmed; no GTP-U TEIDs observed.",
+    "voice_quality": "No MOS possible \u2013 media never established; all calls fail before CONNECT.",
+    "cross_plane_correlation": "Signaling reaches alerting state but absence of 200 OK and RTP implies either (a) called party never answers or (b) network withholds final answer due to bearer/routing issue."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    participant TAS\n    participant Remote\n    UE->>P-CSCF: INVITE\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF->>TAS: INVITE\n    TAS->>Remote: INVITE\n    Remote->>TAS: 183 Session Progress\n    TAS->>S-CSCF: 183\n    S-CSCF->>P-CSCF: 183\n    P-CSCF->>UE: 183\n    Remote->>TAS: 180 Ringing\n    TAS->>S-CSCF: 180\n    S-CSCF->>P-CSCF: 180\n    P-CSCF->>UE: 180\n    Note over UE: No answer ~30 s\n    UE->>P-CSCF: CANCEL (cause=200)\n    P-CSCF->>S-CSCF: CANCEL\n    S-CSCF->>TAS: CANCEL\n    TAS->>Remote: CANCEL\n    Remote->>TAS: 487 Request Terminated\n    TAS->>S-CSCF: 487\n    S-CSCF->>P-CSCF: 487\n    P-CSCF->>UE: 487\n    UE->>P-CSCF: ACK"
+}

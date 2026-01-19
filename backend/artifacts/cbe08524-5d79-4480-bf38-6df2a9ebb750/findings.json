@@ -1,0 +1,45 @@
+{
+  "network_overview": "The capture contains two independent, successful IMS-SIP registration dialogs (VoLTE/VoNR) between the UE (10.235.69.1) and two different P-CSCFs (10.235.68.68 & 10.235.68.65) carried over SCTP on the Mw interface; no calls or media are present and no errors were detected.",
+  "health_score": 100,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Two short SIP registration transactions (4 & 2 pkts) completed in <130 ms each, indicating normal control-plane load.",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No RTP/RTCP observed; media plane not yet established, so voice-quality metrics are not applicable.",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Enable periodic OPTIONS ping from P-CSCF toward registered UE to detect silent failures early.",
+      "rationale": "Adds lightweight keep-alive without re-registration load; improves failover detection.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Collect matching GTP-C/GTP-U capture for the same UE to verify dedicated VoLTE bearer setup latency.",
+      "rationale": "Ensures user-plane resources are allocated within 3GPP 500 ms target after 200 OK.",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Confirm SIP-over-SCTP multi-homing on P-CSCF to eliminate single-homed SCTP association risk.",
+      "rationale": "Prevents call-drop during transport path failure; aligns with TS 23.228 redundancy.",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "100 % success: both REGISTER transactions received 200 OK within 120 ms, no retransmissions or 3xx/4xx/5xx responses.",
+    "user_plane_health": "No GTP tunnels observed; user-plane not yet established (registration-only trace).",
+    "voice_quality": "No RTP flows; QoS metrics (MOS, packet-loss, jitter) not measurable in this control-plane snapshot.",
+    "cross_plane_correlation": "Signaling plane is healthy; bearer creation (GTP-C/U) expected immediately after 200 OK but absent in current capture."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE as 10.235.69.1:6611\n    participant PCSCF1 as 10.235.68.68:5060\n    participant PCSCF2 as 10.235.68.65:6408\n    Note over UE,PCSCF2: VoLTE/VoNR SIP Registration Only\n    UE->>PCSCF1: REGISTER (Call-ID: asbc47zRmWaCXwykhNhFzykadYy4)\n    PCSCF1->>UE: 100 Trying\n    PCSCF1->>UE: 200 OK\n    UE->>PCSCF2: REGISTER (Call-ID: asbcqzdo4HG9RSkfPCNfIvTgvw9H)\n    PCSCF2->>UE: 200 OK\n    Note over UE,PCSCF2: No media (RTP) or bearer (GTP) present"
+}

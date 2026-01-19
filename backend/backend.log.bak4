@@ -1,0 +1,57 @@
+INFO:     Will watch for changes in these directories: ['/home/sttp/pcap/backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [700538] using WatchFiles
+Diameter support not available
+INFO:     Started server process [700543]
+INFO:     Waiting for application startup.
+2026-01-12 07:22:19,405 - app.main - INFO - Upload directory: /home/sttp/pcap/backend/uploads
+2026-01-12 07:22:19,405 - app.main - INFO - PCAP Analyzer backend started
+INFO:     Application startup complete.
+INFO:     127.0.0.1:43134 - "GET / HTTP/1.1" 200 OK
+INFO:     176.202.186.102:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     176.202.186.102:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     176.202.186.102:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2026-01-12 07:22:53,526 - app.main - INFO - Saved file: /home/sttp/pcap/backend/uploads/4aec2471-92ba-4324-9823-776ea9f18f33_Zaidan_case.pcap (533797 bytes)
+INFO:     176.202.186.102:0 - "POST /api/upload HTTP/1.1" 200 OK
+2026-01-12 07:22:53,528 - app.pcap_parser - INFO - Parsing PCAP file: /home/sttp/pcap/backend/uploads/4aec2471-92ba-4324-9823-776ea9f18f33_Zaidan_case.pcap
+2026-01-12 07:22:53,740 - app.pcap_parser - INFO - Parsed 379 packets
+2026-01-12 07:22:53,741 - app.pcap_parser - INFO - Technologies detected: {'VoLTE/VoNR': 379}
+2026-01-12 07:22:53,741 - app.telecom_analyzer - INFO - Analyzing 379 packets into flows
+2026-01-12 07:22:53,742 - app.telecom_analyzer - INFO - Identified 74 unique flows
+2026-01-12 07:22:53,744 - app.telecom_analyzer - INFO - Extracting message sequence from 379 packets
+2026-01-12 07:22:53,745 - app.telecom_analyzer - INFO - Limiting sequence to 100 messages (from 281)
+2026-01-12 07:22:53,745 - app.telecom_analyzer - INFO - Extracted 100 messages for sequence diagram
+2026-01-12 07:22:53,745 - app.llm_service - INFO - Enriching 74 flows with LLM insights
+2026-01-12 07:22:53,746 - app.llm_service - ERROR - Error getting LLM insight for flow 0: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,746 - app.llm_service - ERROR - Error getting LLM insight for flow 1: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,747 - app.llm_service - ERROR - Error getting LLM insight for flow 2: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,747 - app.llm_service - ERROR - Error getting LLM insight for flow 3: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,747 - app.llm_service - ERROR - Error getting LLM insight for flow 4: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,747 - app.llm_service - ERROR - Error getting LLM insight for flow 5: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,748 - app.llm_service - ERROR - Error getting LLM insight for flow 6: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,748 - app.llm_service - ERROR - Error getting LLM insight for flow 7: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,748 - app.llm_service - ERROR - Error getting LLM insight for flow 8: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,749 - app.llm_service - ERROR - Error getting LLM insight for flow 9: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,749 - app.llm_service - INFO - Performing enhanced root cause analysis
+2026-01-12 07:22:53,750 - app.llm_service - ERROR - Error performing RCA: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:22:53,750 - app.main - INFO - Analysis completed for job 4aec2471-92ba-4324-9823-776ea9f18f33
+2026-01-12 07:22:53,751 - app.main - INFO - Cleaned up file: /home/sttp/pcap/backend/uploads/4aec2471-92ba-4324-9823-776ea9f18f33_Zaidan_case.pcap
+INFO:     176.202.186.102:0 - "GET /api/analysis/4aec2471-92ba-4324-9823-776ea9f18f33 HTTP/1.1" 200 OK
+WARNING:  WatchFiles detected changes in 'app/llm_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-01-12 07:23:38,408 - app.main - INFO - PCAP Analyzer backend shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [700543]
+Diameter support not available
+INFO:     Started server process [700987]
+INFO:     Waiting for application startup.
+2026-01-12 07:23:40,111 - app.main - INFO - Upload directory: /home/sttp/pcap/backend/uploads
+2026-01-12 07:23:40,112 - app.main - INFO - PCAP Analyzer backend started
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-01-12 07:23:52,653 - app.main - INFO - PCAP Analyzer backend shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [700987]
+INFO:     Stopping reloader process [700538]

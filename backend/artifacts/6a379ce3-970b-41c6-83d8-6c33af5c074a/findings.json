@@ -1,0 +1,54 @@
+{
+  "network_overview": "The capture contains only 4 packets (215 bytes) exchanged between two private subnets\u2014an HTTP/TCP three-way handshake on 192.168.1.0/24 and a single UDP datagram on 10.0.0.0/24\u2014showing no mobile-specific signalling or user-plane traffic (GTP-U, Diameter, NGAP, S1-AP, SIP, PFCP) and therefore no active subscriber sessions.",
+  "health_score": 85,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Extremely low packet count (4) and sub-millisecond duration indicate the trace was sliced at the very start of a longer session or captured with an aggressive snap-length/bpf filter.",
+      "severity": "info"
+    },
+    {
+      "category": "Protocol Analysis",
+      "finding": "No GTP-C/U, Diameter, NGAP, S1-AP, SIP, RTP, or PFCP detected; traffic is purely best-effort TCP/UDP between RFC1918 hosts\u2014no evidence of 3GPP interfaces.",
+      "severity": "info"
+    },
+    {
+      "category": "Transport Layer",
+      "finding": "TCP flow completed SYN-SYN/ACK-ACK (flags S-SA-A) in 1.7 ms, RTT \u2248 0.85 ms\u2014local LAN-like latency, no retransmissions, window scale ok.",
+      "severity": "info"
+    },
+    {
+      "category": "UDP Datagram",
+      "finding": "Single 53-byte UDP frame (ports 5000\u21926000) could be proprietary keep-alive or measurement probe; payload not decoded.",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Extend capture window to at least 30 s and include 3GPP bearer interfaces (S1-U, S5, N3, N4) to verify VoLTE/5GS user-plane.",
+      "rationale": "Current snapshot is too short to observe GTP tunnel setup or SIP session establishment.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 2,
+      "action": "Enable GTP, PFCP, Diameter, SIP and NGAP decoder preferences in the capture tool to allow accurate technology classification.",
+      "rationale": "Ensures control- and user-plane packets are dissected instead of showing 'Unknown'.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 3,
+      "action": "Filter simultaneously on UDP-L4 ports 2123, 2152, 8805, 3868, 36412, 36422, 5060, 5061 to isolate mobile signalling during problem reproduction.",
+      "rationale": "Reduces background noise and focuses analysis on relevant 3GPP protocols.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "No control-plane protocols observed; GTP-C, Diameter, SIP, NGAP, S1-AP counters zero.",
+    "user_plane_health": "No GTP-U or RTP streams detected; user-plane throughput 0 kbps.",
+    "cross_plane_correlation": "No bearer or SIP dialogs present, therefore no correlation possible."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant Client as 192.168.1.1:1234\n    participant Server as 192.168.1.2:80\n    Note over Client,Server: TCP 3-way handshake only\n    Client->>Server: SYN seq=x\n    Server->>Client: SYN-ACK seq=y ack=x+1\n    Client->>Server: ACK seq=x+1 ack=y+1\n    Note right of Server: No HTTP GET seen (snap end)"
+}

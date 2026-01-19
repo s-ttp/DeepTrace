@@ -1,0 +1,1346 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1765805440.17,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5068,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 627,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805440.17,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5068,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 397,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805440.17,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5068,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 460,
+      "info": {
+        "sip_status": 487
+      }
+    },
+    {
+      "timestamp": 1765805440.171,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.115",
+      "src_port": 6401,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 645,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805440.181,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5068,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 524,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805440.189,
+      "src_ip": "10.174.13.115",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6401,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 396,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805440.19,
+      "src_ip": "10.174.13.115",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6401,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 527,
+      "info": {
+        "sip_status": 487
+      }
+    },
+    {
+      "timestamp": 1765805440.19,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.115",
+      "src_port": 6401,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 583,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.36,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5070,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1209,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.36,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5070,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 347,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.374,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6411,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1822,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.398,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6411,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 387,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.409,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6411,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 809,
+      "info": {
+        "sip_status": 407
+      }
+    },
+    {
+      "timestamp": 1765805616.409,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6411,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 583,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.41,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5070,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 645,
+      "info": {
+        "sip_status": 407
+      }
+    },
+    {
+      "timestamp": 1765805616.418,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5070,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 524,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.449,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5065,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1452,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.449,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 347,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.461,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6407,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 2065,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.483,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 387,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805616.987,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1687,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.003,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1165,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.035,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5065,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 617,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.036,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6407,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 904,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.25,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 745,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.251,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 494,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.32,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 1252,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805617.321,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 837,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.327,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5065,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 627,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.327,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 397,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.328,
+      "src_ip": "10.174.14.138",
+      "dst_ip": "10.235.67.3",
+      "src_port": 5060,
+      "dst_port": 5065,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 460,
+      "info": {
+        "sip_status": 487
+      }
+    },
+    {
+      "timestamp": 1765805632.329,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6407,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 645,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.34,
+      "src_ip": "10.235.67.3",
+      "dst_ip": "10.174.14.138",
+      "src_port": 5065,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 524,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.347,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 396,
+      "info": ""
+    },
+    {
+      "timestamp": 1765805632.347,
+      "src_ip": "10.174.13.117",
+      "dst_ip": "10.174.14.5",
+      "src_port": 5060,
+      "dst_port": 6407,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 527,
+      "info": {
+        "sip_status": 487
+      }
+    },
+    {
+      "timestamp": 1765805632.348,
+      "src_ip": "10.174.14.5",
+      "dst_ip": "10.174.13.117",
+      "src_port": 6407,
+      "dst_port": 5060,
+      "protocol": "SIP",
+      "transport": "UDP",
+      "length": 583,
+      "info": ""
+    }
+  ],
+  "deep_transactions": [
+    {
+      "tx_id": "pkt_1",
+      "timestamp": 1765805440.17,
+      "frame_number": 1,
+      "protocol": "SIP",
+      "message_type": "CANCEL",
+      "cause": "Q.850;cause=16;text=normal call clearing\"\"",
+      "session_ids": {
+        "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_2",
+      "timestamp": 1765805440.17,
+      "frame_number": 2,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_3",
+      "timestamp": 1765805440.17,
+      "frame_number": 3,
+      "protocol": "SIP",
+      "message_type": "487 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_4",
+      "timestamp": 1765805440.171,
+      "frame_number": 4,
+      "protocol": "SIP",
+      "message_type": "CANCEL",
+      "cause": "Q.850;cause=16;text=normal call clearing\"\"",
+      "session_ids": {
+        "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.115",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_5",
+      "timestamp": 1765805440.181,
+      "frame_number": 5,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_6",
+      "timestamp": 1765805440.189,
+      "frame_number": 6,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.115",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_7",
+      "timestamp": 1765805440.19,
+      "frame_number": 7,
+      "protocol": "SIP",
+      "message_type": "487 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.115",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_8",
+      "timestamp": 1765805440.19,
+      "frame_number": 8,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.115",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_9",
+      "timestamp": 1765805616.36,
+      "frame_number": 9,
+      "protocol": "SIP",
+      "message_type": "INVITE",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_10",
+      "timestamp": 1765805616.36,
+      "frame_number": 10,
+      "protocol": "SIP",
+      "message_type": "100 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_11",
+      "timestamp": 1765805616.374,
+      "frame_number": 11,
+      "protocol": "SIP",
+      "message_type": "INVITE",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_12",
+      "timestamp": 1765805616.398,
+      "frame_number": 12,
+      "protocol": "SIP",
+      "message_type": "100 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_13",
+      "timestamp": 1765805616.409,
+      "frame_number": 13,
+      "protocol": "SIP",
+      "message_type": "407 Response",
+      "cause": "Q.850;cause=21,SIP;cause=407",
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_14",
+      "timestamp": 1765805616.409,
+      "frame_number": 14,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_15",
+      "timestamp": 1765805616.41,
+      "frame_number": 15,
+      "protocol": "SIP",
+      "message_type": "407 Response",
+      "cause": "Q.850;cause=21,SIP;cause=407",
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_16",
+      "timestamp": 1765805616.418,
+      "frame_number": 16,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_17",
+      "timestamp": 1765805616.449,
+      "frame_number": 17,
+      "protocol": "SIP",
+      "message_type": "INVITE",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_18",
+      "timestamp": 1765805616.449,
+      "frame_number": 18,
+      "protocol": "SIP",
+      "message_type": "100 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_19",
+      "timestamp": 1765805616.461,
+      "frame_number": 19,
+      "protocol": "SIP",
+      "message_type": "INVITE",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_20",
+      "timestamp": 1765805616.483,
+      "frame_number": 20,
+      "protocol": "SIP",
+      "message_type": "100 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_21",
+      "timestamp": 1765805616.987,
+      "frame_number": 21,
+      "protocol": "SIP",
+      "message_type": "183 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_22",
+      "timestamp": 1765805617.003,
+      "frame_number": 22,
+      "protocol": "SIP",
+      "message_type": "183 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_23",
+      "timestamp": 1765805617.035,
+      "frame_number": 23,
+      "protocol": "SIP",
+      "message_type": "PRACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_24",
+      "timestamp": 1765805617.036,
+      "frame_number": 24,
+      "protocol": "SIP",
+      "message_type": "PRACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_25",
+      "timestamp": 1765805617.25,
+      "frame_number": 25,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_26",
+      "timestamp": 1765805617.251,
+      "frame_number": 26,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_27",
+      "timestamp": 1765805617.32,
+      "frame_number": 27,
+      "protocol": "SIP",
+      "message_type": "180 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_28",
+      "timestamp": 1765805617.321,
+      "frame_number": 28,
+      "protocol": "SIP",
+      "message_type": "180 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_29",
+      "timestamp": 1765805632.327,
+      "frame_number": 29,
+      "protocol": "SIP",
+      "message_type": "CANCEL",
+      "cause": "Q.850;cause=16;text=normal call clearing\"\"",
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_30",
+      "timestamp": 1765805632.327,
+      "frame_number": 30,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_31",
+      "timestamp": 1765805632.328,
+      "frame_number": 31,
+      "protocol": "SIP",
+      "message_type": "487 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.138",
+      "_dst": "10.235.67.3",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_32",
+      "timestamp": 1765805632.329,
+      "frame_number": 32,
+      "protocol": "SIP",
+      "message_type": "CANCEL",
+      "cause": "Q.850;cause=16;text=normal call clearing\"\"",
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_33",
+      "timestamp": 1765805632.34,
+      "frame_number": 33,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.235.67.3",
+      "_dst": "10.174.14.138",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_34",
+      "timestamp": 1765805632.347,
+      "frame_number": 34,
+      "protocol": "SIP",
+      "message_type": "200 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_35",
+      "timestamp": 1765805632.347,
+      "frame_number": 35,
+      "protocol": "SIP",
+      "message_type": "487 Response",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.13.117",
+      "_dst": "10.174.14.5",
+      "_teid": null,
+      "_seid": null
+    },
+    {
+      "tx_id": "pkt_36",
+      "timestamp": 1765805632.348,
+      "frame_number": 36,
+      "protocol": "SIP",
+      "message_type": "ACK",
+      "cause": null,
+      "session_ids": {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC"
+      },
+      "info": {},
+      "flags": {},
+      "_seq": null,
+      "_src": "10.174.14.5",
+      "_dst": "10.174.13.117",
+      "_teid": null,
+      "_seid": null
+    }
+  ],
+  "voice_analysis": {
+    "trace_type": "CALLS_AND_REGISTRATIONS",
+    "calls": [
+      {
+        "call_id": "k4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC",
+        "start_time": 1765805616.36,
+        "end_time": 1765805632.34,
+        "duration_sec": 15.98,
+        "state": "FAILED",
+        "method": "INVITE",
+        "end_reason": "CANCELLED",
+        "messages": [
+          {
+            "time": 1765805616.36,
+            "type": "INVITE",
+            "code": null,
+            "method": "INVITE"
+          },
+          {
+            "time": 1765805616.36,
+            "type": "100 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805616.41,
+            "type": "407 Response",
+            "code": "Q.850;cause=21,SIP;cause=407",
+            "method": null
+          },
+          {
+            "time": 1765805616.418,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          },
+          {
+            "time": 1765805616.449,
+            "type": "INVITE",
+            "code": null,
+            "method": "INVITE"
+          },
+          {
+            "time": 1765805616.449,
+            "type": "100 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805617.003,
+            "type": "183 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805617.035,
+            "type": "PRACK",
+            "code": null,
+            "method": "PRACK"
+          },
+          {
+            "time": 1765805617.251,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805617.321,
+            "type": "180 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.327,
+            "type": "CANCEL",
+            "code": "Q.850;cause=16;text=normal call clearing\"\"",
+            "method": "CANCEL"
+          },
+          {
+            "time": 1765805632.327,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.328,
+            "type": "487 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.34,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          }
+        ],
+        "src_ip": "10.235.67.3",
+        "dst_ip": "10.174.14.138",
+        "ua": null,
+        "msg_count": 14
+      },
+      {
+        "call_id": "asbck4ke1hpwji1q4kmjw4wnqpktnpq0p41i@UAC",
+        "start_time": 1765805616.374,
+        "end_time": 1765805632.348,
+        "duration_sec": 15.974,
+        "state": "FAILED",
+        "method": "INVITE",
+        "end_reason": "CANCELLED",
+        "messages": [
+          {
+            "time": 1765805616.374,
+            "type": "INVITE",
+            "code": null,
+            "method": "INVITE"
+          },
+          {
+            "time": 1765805616.398,
+            "type": "100 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805616.409,
+            "type": "407 Response",
+            "code": "Q.850;cause=21,SIP;cause=407",
+            "method": null
+          },
+          {
+            "time": 1765805616.409,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          },
+          {
+            "time": 1765805616.461,
+            "type": "INVITE",
+            "code": null,
+            "method": "INVITE"
+          },
+          {
+            "time": 1765805616.483,
+            "type": "100 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805616.987,
+            "type": "183 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805617.036,
+            "type": "PRACK",
+            "code": null,
+            "method": "PRACK"
+          },
+          {
+            "time": 1765805617.25,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805617.32,
+            "type": "180 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.329,
+            "type": "CANCEL",
+            "code": "Q.850;cause=16;text=normal call clearing\"\"",
+            "method": "CANCEL"
+          },
+          {
+            "time": 1765805632.347,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.347,
+            "type": "487 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805632.348,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          }
+        ],
+        "src_ip": "10.174.14.5",
+        "dst_ip": "10.174.13.117",
+        "ua": null,
+        "msg_count": 14
+      }
+    ],
+    "registrations": [
+      {
+        "call_id": "mwm1jee111y4q4epknlnph0ynmypej4h@UAC",
+        "start_time": 1765805440.17,
+        "end_time": 1765805440.181,
+        "duration_sec": 0.011,
+        "state": "FAILED",
+        "method": "CANCEL",
+        "end_reason": "TRANSACTION_TIMEOUT",
+        "messages": [
+          {
+            "time": 1765805440.17,
+            "type": "CANCEL",
+            "code": "Q.850;cause=16;text=normal call clearing\"\"",
+            "method": "CANCEL"
+          },
+          {
+            "time": 1765805440.17,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805440.17,
+            "type": "487 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805440.181,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          }
+        ],
+        "src_ip": "10.235.67.3",
+        "dst_ip": "10.174.14.138",
+        "ua": null,
+        "msg_count": 4
+      },
+      {
+        "call_id": "asbcmwm1jee111y4q4epknlnph0ynmypej4h@UAC",
+        "start_time": 1765805440.171,
+        "end_time": 1765805440.19,
+        "duration_sec": 0.019,
+        "state": "FAILED",
+        "method": "CANCEL",
+        "end_reason": "TRANSACTION_TIMEOUT",
+        "messages": [
+          {
+            "time": 1765805440.171,
+            "type": "CANCEL",
+            "code": "Q.850;cause=16;text=normal call clearing\"\"",
+            "method": "CANCEL"
+          },
+          {
+            "time": 1765805440.189,
+            "type": "200 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805440.19,
+            "type": "487 Response",
+            "code": null,
+            "method": null
+          },
+          {
+            "time": 1765805440.19,
+            "type": "ACK",
+            "code": null,
+            "method": "ACK"
+          }
+        ],
+        "src_ip": "10.174.14.5",
+        "dst_ip": "10.174.13.115",
+        "ua": null,
+        "msg_count": 4
+      }
+    ],
+    "findings": []
+  }
+}

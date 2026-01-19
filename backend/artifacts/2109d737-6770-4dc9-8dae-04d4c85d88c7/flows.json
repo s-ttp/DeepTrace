@@ -1,0 +1,24 @@
+[
+  {
+    "packet_count": 4,
+    "total_bytes": 1296,
+    "tcp_flags": [
+      "PA"
+    ],
+    "analysis_events": [],
+    "src_ip": "10.193.1.134",
+    "dst_ip": "10.47.73.86",
+    "src_port": 3868,
+    "dst_port": 42049,
+    "transport": "TCP",
+    "duration": 3.044502019882202,
+    "start_time": 1722044076.306955,
+    "end_time": 1722044079.351457,
+    "pps": 1.31,
+    "protocol": "Diameter",
+    "technology": "4G/LTE",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "4G/LTE"
+  }
+]

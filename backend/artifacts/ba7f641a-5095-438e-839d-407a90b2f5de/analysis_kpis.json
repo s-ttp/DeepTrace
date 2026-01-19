@@ -1,0 +1,92 @@
+{
+  "procedure_kpis": {
+    "INVITE": {
+      "attempts": 8,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "100 Response": {
+      "attempts": 8,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "407 Response": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Q.850;cause=21,SIP;cause=407": 4
+      }
+    },
+    "ACK": {
+      "attempts": 6,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "183 Response": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PRACK": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "200 Response": {
+      "attempts": 6,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "180 Response": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "CANCEL": {
+      "attempts": 2,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Q.850;cause=16;text=normal call clearing\"\"": 2
+      }
+    },
+    "487 Response": {
+      "attempts": 2,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    }
+  },
+  "time_window_diffs": {
+    "baseline_window": "First 12 transactions",
+    "incident_window": "Remaining 36 transactions",
+    "procedure_deltas": {
+      "CANCEL": {
+        "new_failure_codes": [
+          "Q.850;cause=16;text=normal call clearing\"\""
+        ]
+      }
+    },
+    "summary": {
+      "degraded_procedures": 0,
+      "improved_procedures": 0,
+      "new_failure_codes_detected": true
+    }
+  },
+  "sctp_stats": "-------------------------------------------- SCTP Statistics --------------------------------------------------------------------------\n|  Total packets RX/TX 0\n---------------------------------------------------------------------------------------------------------------------------------------\n|   Source IP   |PortA|    Dest. IP   |PortB|  DATA  |  SACK  |  HBEAT |HBEATACK|  INIT  | INITACK| COOKIE |COOKIACK| ABORT  |  ERROR |\n---------------------------------------------------------------------------------------------------------------------------------------\n---------------------------------------------------------------------------------------------------------------------------------------\n",
+  "voice_stats": {
+    "trace_type": "CALLS_AND_REGISTRATIONS",
+    "total_calls": 4,
+    "total_registrations": 0,
+    "dropped": 0,
+    "media_issues": 0
+  }
+}

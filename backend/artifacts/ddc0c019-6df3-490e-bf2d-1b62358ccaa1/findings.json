@@ -1,0 +1,91 @@
+{
+  "network_overview": "The capture shows mixed 4G/5G control-plane signaling: one GTP-C tunnel establishment fails twice with Cause 128, three consecutive PFCP Session-Establishment attempts are rejected with 'No Resources Available', and a single Diameter transaction succeeds. No user-plane (GTP-U) or voice/IMS traffic is observed.",
+  "classification": "REJECTED",
+  "health_score": 35,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "GTP-C Create Session Request (0x10) immediately answered with Create Session Response carrying Cause 128 (unknown failure)",
+      "severity": "critical",
+      "evidence": "pkt_1 (0x14) \u2192 pkt_3 (0x15, cause 128) and pkt_29 (0x10) \u2192 pkt_32 (0x11, cause 128)"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Three PFCP Session-Establishment requests (Msg-50) all receive Session-Establishment Response with Cause 73 'No Resources Available'",
+      "severity": "critical",
+      "evidence": "pkt_8,16,24 (Msg-50) \u2192 pkt_9,17,25 (Msg-51, cause 73)"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Diameter Credit-Control (Cmd-272) exchange completes successfully with Result-Code 2001",
+      "severity": "info",
+      "evidence": "pkt_6 (request) \u2192 pkt_7 (answer, 2001)"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "GTP-C bearer creation blocked by unknown failure",
+      "description": "Both observed Create Session procedures return Cause 128, a non-standard value, indicating the S-GW or P-GW cannot instantiate the bearer for an undocumented reason",
+      "impact": "UE cannot obtain PDN connectivity; no user-plane tunnel established",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "GTP-Msg-0x15, Cause 128, frame 3",
+        "GTP-Msg-0x11, Cause 128, frame 32"
+      ]
+    },
+    {
+      "issue": "UPF resource exhaustion prevents PFCP session",
+      "description": "UPF (10.130.9.119) consistently replies with Cause 73 'No Resources Available' to every SMF Session-Establishment attempt, showing CPU/memory/TEID pool exhaustion",
+      "impact": "5G PDU session setup fails; no N4 session established",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "PFCP-Msg-51, Cause 73, frames 9,17,25"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "User-plane connectivity after successful Diameter exchange",
+      "reason": "No GTP-U packets observed",
+      "additional_capture_needed": "Mirror user-plane link or enable GTP-U decode on S1-U/S5-U/N3"
+    },
+    {
+      "aspect": "Voice/IMS registration or call setup",
+      "reason": "No SIP, RTP, or IMS-related protocols present",
+      "additional_capture_needed": "Capture on P-CSCF or SIP-lb interface"
+    },
+    {
+      "aspect": "Exact meaning of GTP-C Cause 128",
+      "reason": "Value not listed in 3GPP TS 29.274 standard causes",
+      "additional_capture_needed": "Vendor-specific logs from S-GW/P-GW"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate UPF resource usage (CPU, memory, TEID pool) and clear congestion",
+      "rationale": "Three consecutive PFCP 'No Resources Available' responses prove UPF exhaustion",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Check S-GW/P-GW vendor documentation for Cause 128 and upgrade firmware if known bug",
+      "rationale": "Non-standard cause value blocks all bearer creation attempts",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Collect GTP-U and SIP traces to verify whether any user-plane or voice service is ever established",
+      "rationale": "Current capture only shows control-plane failures; user-plane health unknown",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "4G GTP-C and 5G PFCP signaling are failing; only Diameter completes successfully",
+    "user_plane_health": "Not observable at this capture point",
+    "voice_quality": "Not observable at this capture point",
+    "cross_plane_correlation": "No user-plane tunnels observed, correlating with GTP-C/PFCP rejections"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant MME\n    participant SGW\n    participant SMF\n    participant UPF\n    participant PCRF\n\n    MME->>SGW: GTP-C Create Session Request (0x10)\n    SGW->>MME: GTP-C Create Session Response (0x11, Cause 128)\n\n    SMF->>UPF: PFCP Session-Establishment Request (Msg-50)\n    UPF->>SMF: PFCP Session-Establishment Response (Msg-51, Cause 73)\n\n    SMF->>UPF: PFCP Session-Establishment Request (Msg-50)\n    UPF->>SMF: PFCP Session-Establishment Response (Msg-51, Cause 73)\n\n    SMF->>UPF: PFCP Session-Establishment Request (Msg-50)\n    UPF->>SMF: PFCP Session-Establishment Response (Msg-51, Cause 73)\n\n    PCRF->>PCRF: Diameter Credit-Control Request (272)\n    PCRF->>PCRF: Diameter Credit-Control Answer (272, 2001)\n\n    MME->>SGW: GTP-C Create Session Request (0x10)\n    SGW->>MME: GTP-C Create Session Response (0x11, Cause 128)"
+}

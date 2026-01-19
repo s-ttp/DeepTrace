@@ -1,0 +1,34 @@
+{
+  "_comment": "Vendor-specific reason code mappings for Nokia MSS and Huawei IMS",
+  "X.int": {
+    "_vendor": "Nokia",
+    "_format": "hex",
+    "codes": {
+      "0x00000000": "Normal clearing",
+      "0x00000603": "Call release",
+      "0x0000070E": "Timeout/interworking"
+    },
+    "add_info": {
+      "_comment": "Component/module identifiers - add mappings as observed"
+    }
+  },
+  "huawei_text_patterns": {
+    "_comment": "Proprietary text patterns in SIP Reason header",
+    "RELEASE FROM CC": {
+      "component": "Call Control",
+      "meaning": "Internal release"
+    },
+    "query adb failed": {
+      "component": "HSS",
+      "meaning": "Subscriber lookup failed"
+    },
+    "No Prack received": {
+      "component": "SCSCF",
+      "meaning": "PRACK timeout"
+    },
+    "Invalid number format": {
+      "component": "AS",
+      "meaning": "Address incomplete"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "network_overview": "The capture contains only LTE control-plane signaling (S1-AP/X2-AP over SCTP) plus a single DNS query; no user-plane (GTP-U) or IMS traffic is present. 100 % of the S1-AP procedures (Proc-11/12/13/23) and Diameter exchanges (Cmd-316/318) show zero success rate, indicating every transaction failed or was rejected.",
+  "health_score": 0,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "All 72 S1-AP procedure attempts (Proc-11/12/13/23) lack any successful outcome, producing 0 % success rate.",
+      "severity": "critical"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "All 6 Diameter policy sessions (Cmd-316/318) are answered with Result-Code 2001 (DIAMETER_SUCCESS) yet still counted as failures, revealing a KPI-calculation bug or missing response-matching.",
+      "severity": "warning"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Zero VoLTE/IMS calls, registrations or RTP streams detected; voice service is absent in this slice.",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "S1-AP procedure failures",
+      "description": "Every S1-AP transaction (attach, bearer setup, handover, etc.) is rejected or unanswered, implying the MME is either overloaded, mis-configured, or the eNB is sending malformed requests.",
+      "impact": "UEs cannot camp on the cell; no data or voice service possible.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Proc-12: 3 attempts, 0 % success",
+        "Proc-13: 27 attempts, 0 % success",
+        "Proc-11: 30 attempts, 0 % success"
+      ]
+    },
+    {
+      "issue": "Diameter KPI miscalculation",
+      "description": "Cmd-316 & 318 receive 2001 Success yet are still logged as 0 % success, indicating the analytics engine is not correlating answers to requests correctly.",
+      "impact": "False-positive alarms and incorrect SLA reporting.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Cmd-318: 3\u00d7 2001 replies but 0 % success",
+        "Cmd-316: 3\u00d7 2001 replies but 0 % success"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate MME logs for the exact S1-AP reject causes (e.g., Missing-IE, Unknown-UE, PLMN-not-allowed) matching the Proc-11/12/13/23 attempts.",
+      "rationale": "Determines whether failures are due to configuration, overload, or eNB mis-behavior.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Fix the KPI correlation logic so Diameter Result-Code 2001 is counted as success.",
+      "rationale": "Prevents false outage alarms and gives accurate QoS metrics.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 3,
+      "action": "Enable GTP-U capture on S1-U to verify whether user-plane bearers are actually established despite control-plane rejections.",
+      "rationale": "Confirms if the 0 % success rate is real or a reporting artifact.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Control-plane is completely non-functional: every S1-AP procedure fails; Diameter policy sessions succeed at protocol level but are mis-reported.",
+    "user_plane_health": "No GTP tunnels detected; user-plane is idle.",
+    "voice_quality": "No IMS or RTP traffic present; voice service unavailable.",
+    "cross_plane_correlation": "Signaling failures prevent any user-plane or voice bearer creation."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant eNB\n    participant MME\n    Note over eNB,MME: All S1-AP procedures fail\n    eNB->>MME: Proc-12 (Initial UE msg)\n    MME-->>eNB: Reject / No Response\n    eNB->>MME: Proc-13 (UE Context Setup)\n    MME-->>eNB: Reject / No Response\n    loop Every 30 ms\n        eNB->>MME: Proc-11/13 Retries\n        MME-->>eNB: Still failing\n    end\n    Note right of MME: 0 % success for all procedures"
+}

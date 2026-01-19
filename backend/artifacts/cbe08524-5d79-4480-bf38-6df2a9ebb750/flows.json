@@ -1,0 +1,40 @@
+[
+  {
+    "packet_count": 4,
+    "total_bytes": 3484,
+    "analysis_events": [],
+    "src_ip": "10.235.69.1",
+    "dst_ip": "10.235.68.68",
+    "src_port": 6611,
+    "dst_port": 5060,
+    "transport": "SCTP",
+    "duration": 0.11831092834472656,
+    "start_time": 1606196850.078548,
+    "end_time": 1606196850.196859,
+    "pps": 33.81,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR"
+  },
+  {
+    "packet_count": 2,
+    "total_bytes": 1360,
+    "analysis_events": [],
+    "src_ip": "10.235.68.65",
+    "dst_ip": "10.235.69.1",
+    "src_port": 6408,
+    "dst_port": 5060,
+    "transport": "SCTP",
+    "duration": 0.1277458667755127,
+    "start_time": 1606196850.190417,
+    "end_time": 1606196850.318163,
+    "pps": 15.66,
+    "protocol": "SIP",
+    "technology": "VoLTE/VoNR",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "VoLTE/VoNR"
+  }
+]

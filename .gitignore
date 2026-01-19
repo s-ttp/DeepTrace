@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+backend/venv/
+venv/
+
+# Build Output
+frontend/build/
+dist/
+__pycache__/
+*.pyc
+
+# Environment & Config
+.env
+.env.local
+
+# Temp & Data
+temp/
+backend/uploads/
+*.pcap
+*.pcapng
+*.log

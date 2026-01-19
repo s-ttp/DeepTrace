@@ -1,0 +1,92 @@
+{
+  "network_overview": "The trace shows two independent control-plane exchanges: a GTPv2-C Create/Delete Bearer dialog (TEID 0xb43a333b) that ends with an unknown cause value 209, and two Diameter CCR exchanges on TCP/3868 returning result codes 2001 and 4010. No user-plane or voice/IMS traffic is present.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 45,
+  "health_status": "warning",
+  "observations": [
+    {
+      "category": "GTP-C Procedure",
+      "finding": "Create Session Request (msg 0x10) answered with Delete Bearer Response (msg 0x11) carrying unknown cause 209",
+      "severity": "warning",
+      "evidence": "GTPv2-C frame 8: message_type=0x11, cause=209 (labelled 'Unknown Cause 209')"
+    },
+    {
+      "category": "Diameter Policy",
+      "finding": "One Diameter CCR terminated with permanent failure 4010 (DIAMETER_END_USER_SERVICE_DENIED)",
+      "severity": "warning",
+      "evidence": "Diameter frame 5: Cmd-272, result-code AVP=4010"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "All observed traffic is control-plane; no GTP-U or RTP packets captured",
+      "severity": "info",
+      "evidence": "Protocols detected list: Diameter, GTP-C only"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "GTP-C bearer setup rejected with proprietary cause",
+      "description": "The MME/SGW attempted to create a bearer (msg 0x10) but the peer responded with a Delete Bearer Response containing an undocumented cause value 209, indicating a vendor-specific rejection or internal error.",
+      "impact": "Bearer context not established; user-plane tunnel unavailable",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "GTPv2-C frame 1: message_type=0x10 (Create Session Request)",
+        "GTPv2-C frame 8: message_type=0x11, cause=209"
+      ]
+    },
+    {
+      "issue": "Diameter policy denial for one subscriber session",
+      "description": "A Diameter CCR request was answered with result-code 4010 (DIAMETER_END_USER_SERVICE_DENIED), indicating the PCRF or OCS refused service activation for that subscriber.",
+      "impact": "Subscriber cannot activate the requested service/PDN connection",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "Diameter frame 4: CCR request",
+        "Diameter frame 5: CCA answer with result-code=4010"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Voice/IMS call outcome",
+      "reason": "No SIP, RTP, or IMS protocols observed",
+      "additional_capture_needed": "Capture on SBC or P-CSCF interface including SIP and RTP"
+    },
+    {
+      "aspect": "Root cause of GTP-C cause 209",
+      "reason": "Cause value 209 is not defined in 3GPP TS 29.274",
+      "additional_capture_needed": "Vendor-specific logs from the replying node (SGW/PGW) or GTP-C trace with private extension AVPs"
+    },
+    {
+      "aspect": "User-plane connectivity",
+      "reason": "GTP-U tunnels present in flow stats but zero GTP-U packets captured",
+      "additional_capture_needed": "Mirror the S1-U or S5-U interface to observe GTP-U traffic"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Consult vendor documentation for GTP-C cause 209 and upgrade firmware if a known bug",
+      "rationale": "Undocumented cause values often indicate software defects or configuration mismatches",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Check PCRF/OCS subscriber profile for the IMSI that received Diameter result 4010",
+      "rationale": "Permanent Diameter failure 4010 indicates service not allowed for that user",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Capture on S1-U/S5-U to confirm whether user-plane packets use the advertised TEID 0xb43a333b",
+      "rationale": "Bearer creation may have failed silently even though a TEID was allocated",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Mixed: one GTP-C procedure failed with unknown cause 209; one Diameter CCR succeeded (2001) and one failed (4010); no retransmissions detected",
+    "user_plane_health": "Not observable: GTP-U tunnels listed but zero GTP-U packets captured",
+    "voice_quality": "Not observable: no RTP or IMS protocols present",
+    "cross_plane_correlation": "No correlation possible: user-plane not captured and no SIP/RTP observed"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant MME\n    participant SGW\n    participant PGW\n    participant PCRF\n    Note over MME,PGW: GTP-C Bearer Setup\n    MME->>SGW: Create Session Request (0x10) TEID=0x0\n    SGW->>PGW: (not captured)\n    PGW->>SGW: (not captured)\n    SGW->>MME: Delete Bearer Response (0x11) cause=209 TEID=0xb43a333b\n    Note over PCRF,PCRF: Diameter Policy\n    PCRF->>PCRF: CCR session=mscp02...094\n    PCRF->>PCRF: CCA result=2001\n    PCRF->>PCRF: CCR session=cmg01...094\n    PCRF->>PCRF: CCA result=4010"
+}

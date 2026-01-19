@@ -1,0 +1,55 @@
+{
+  "network_overview": "The capture contains only two short IMS registration attempts over the Gm interface (SIP/SCTP). Both transactions complete with 200 OK, yet the analytics engine flags them as \u201cFAILED \u2013 SETUP_TIMEOUT\u201d, indicating a false-positive classification rather than a real network fault.",
+  "health_score": 95,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Two independent SIP REGISTER dialogs (call-id asbc47zRmWaCXwykhNhFzykadYy4 & asbcqzdo4HG9RSkfPCNfIvTgvw9H) complete in <130 ms each, well within IMS specs.",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No INVITE/BYE seen; therefore no bearer (QCI=1) or RTP was established. No media-plane issues can exist.",
+      "severity": "info"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "Tool incorrectly marks successful 200 OK as FAILED/SETUP_TIMEOUT; this is an instrumentation defect, not a call drop.",
+      "severity": "warning"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "False-positive SETUP_TIMEOUT alarms on successful REGISTER",
+      "description": "The KPI engine treats any dialog without a subsequent INVITE within a hard-coded window as a failed call, even though the REGISTER succeeded.",
+      "impact": "Inflates drop counters, triggers unnecessary tickets, and masks real failures.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Call:asbc47zRmWaCXwykhNhFzykadYy4 (200 OK at 1606196850.196859)",
+        "Call:asbcqzdo4HG9RSkfPCNfIvTgvw9H (200 OK at 1606196850.318163)"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Fix analytics rule-set: separate REGISTRATION success from CALL_SETUP success; use INVITE/BYE presence to classify calls.",
+      "rationale": "Removes noise, improves MTTR for genuine voice failures.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Enable SIP call-id correlation across P-CSCF logs to confirm no INVITE followed.",
+      "rationale": "Validates the capture conclusion and fine-tunes heuristics.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP/SCTP transport healthy (no retransmissions, 200 OK returned).",
+    "user_plane_health": "No user-plane traffic observed (no GTP-U, no RTP).",
+    "voice_quality": "N/A \u2013 no call bearer established.",
+    "cross_plane_correlation": "Only control-plane registration occurred; bearer setup would start after subsequent INVITE."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE as 10.235.69.1:6611\n    participant P-CSCF as 10.235.68.68:5060\n    Note over UE,P-CSCF: REGISTER transaction (correctly succeeds)\n    UE->>P-CSCF: REGISTER call-id:asbc47zRmWaCXwykhNhFzykadYy4\n    P-CSCF->>UE: 100 Trying\n    P-CSCF->>UE: 200 OK\n    Note right of P-CSCF: Tool mis-labels as FAILED (no INVITE)"
+}

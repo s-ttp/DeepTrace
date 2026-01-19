@@ -1,0 +1,11 @@
+{
+  "total_flows": 1,
+  "total_packets": 11,
+  "total_bytes": 1636,
+  "protocols": [
+    "SCTP"
+  ],
+  "duration": 21.089831113815308,
+  "start_time": 1662883143.011988,
+  "end_time": 1662883164.101819
+}

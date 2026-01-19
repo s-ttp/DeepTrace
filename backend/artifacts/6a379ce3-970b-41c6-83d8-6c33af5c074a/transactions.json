@@ -1,0 +1,49 @@
+{
+  "scapy_sequence": [
+    {
+      "timestamp": 1768281044.20964,
+      "src_ip": "192.168.1.1",
+      "dst_ip": "192.168.1.2",
+      "src_port": 1234,
+      "dst_port": 80,
+      "protocol": "HTTP",
+      "transport": "TCP",
+      "length": 54,
+      "info": ""
+    },
+    {
+      "timestamp": 1768281044.210565,
+      "src_ip": "192.168.1.2",
+      "dst_ip": "192.168.1.1",
+      "src_port": 80,
+      "dst_port": 1234,
+      "protocol": "HTTP",
+      "transport": "TCP",
+      "length": 54,
+      "info": ""
+    },
+    {
+      "timestamp": 1768281044.211346,
+      "src_ip": "192.168.1.1",
+      "dst_ip": "192.168.1.2",
+      "src_port": 1234,
+      "dst_port": 80,
+      "protocol": "HTTP",
+      "transport": "TCP",
+      "length": 54,
+      "info": ""
+    },
+    {
+      "timestamp": 1768281044.21193,
+      "src_ip": "10.0.0.1",
+      "dst_ip": "10.0.0.2",
+      "src_port": 5000,
+      "dst_port": 6000,
+      "protocol": "UDP",
+      "transport": "UDP",
+      "length": 53,
+      "info": ""
+    }
+  ],
+  "tshark_dump": []
+}

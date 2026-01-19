@@ -1,0 +1,122 @@
+{
+  "network_overview": "The capture contains SIP signaling only (IMS signaling plane) for VoLTE/VoNR-related sessions. Multiple INVITE attempts receive provisional responses (100/180/183) and PRACK/UPDATE exchanges, but many sessions are terminated by caller-initiated CANCEL, and some dialogs are later cleared by BYE with vendor/opaque Reason text values.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 25,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "Caller cancels call attempt (CANCEL) leading to 487 Request Terminated for INVITE",
+      "spec_reference": "RFC 3261 (CANCEL method; INVITE transaction terminated with 487)",
+      "evidence": [
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL at 1726068029.302117 with Reason 'SIP;cause=200;text=Call Rejected By User\"\"'",
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: subsequent SIP 487 Response at 1726068029.304147 and ACK at 1726068029.335153",
+        "Call-ID asbc1eEeXOyORCYzPJN6BcinNvKt: SIP CANCEL at 1726068029.306026 with Reason 'SIP;cause=200;text=Call Rejected By User\"\"' followed by SIP 487 Response at 1726068029.319634"
+      ],
+      "confidence": "HIGH",
+      "explanation": "The SIP signaling shows an INVITE in progress followed by a CANCEL from the caller side, and the INVITE is then terminated with a 487 response, matching standard SIP behavior."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Multiple call attempts are explicitly cancelled by the caller after receiving provisional responses (180/183), indicating user/app-initiated termination rather than a network reject at SIP layer in those instances.",
+      "severity": "warning",
+      "evidence": "Example Call-ID 1eEeXOyORCYzPJN6BcinNvKt: INVITE 1726067992.944127 -> 183 1726067995.564286 -> 180 1726067996.735536 -> CANCEL 1726068029.302117 (Reason: SIP;cause=200;text=Call Rejected By User\"\") -> 487 1726068029.304147"
+    },
+    {
+      "category": "Signaling Consistency",
+      "finding": "The provided 'media_findings' claim 'No 180/183 response received' for several calls, but the call message lists show 180 and/or 183 responses present; this indicates an inconsistency in the derived findings vs observed SIP message list.",
+      "severity": "critical",
+      "evidence": "Call-ID 1eEeXOyORCYzPJN6BcinNvKt includes 183 at 1726067995.564286 and 180 at 1726067996.735536, while media_findings.evidence.has_180/has_183 are shown as false."
+    },
+    {
+      "category": "Call Clearing",
+      "finding": "Some dialogs are cleared with BYE carrying non-standard/opaque Reason text parameters; the meaning of these values cannot be standardized from this capture alone.",
+      "severity": "warning",
+      "evidence": "Call-ID asbcM3hLVREVD5ydTfb0VA0EWIeM: BYE at 1726069583.069769 with Reason 'SIP;cause=503;text=03077.09093.A.005.417.228.0.0.00055.00000009 PS to CS Handover\"\"'; Call-ID ffll43qaga4q76d36gy4344yyw4g0ggl@10.174.4.4: BYE at 1726070079.247469 with Reason 'X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E'"
+    },
+    {
+      "category": "Transport/Flows",
+      "finding": "SIP signaling is observed over SCTP between several internal addresses, indicating a stable long-lived signaling association for some flows (e.g., 10.174.14.5:6413 -> 10.174.5.115:5060 over ~2184s).",
+      "severity": "info",
+      "evidence": "Top flow: src 10.174.14.5:6413 to dst 10.174.5.115:5060, transport SCTP, duration 2184.2497889995575s"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Caller-initiated cancellation of call setup (CANCEL)",
+      "description": "Several call attempts are terminated by a SIP CANCEL sent by the calling side, with a Reason header indicating 'SIP;cause=200;text=Call Rejected By User\"\"'. The network then responds with 200 OK to the CANCEL and terminates the INVITE transaction with 487, followed by ACK.",
+      "impact": "Call setup is aborted before a final successful call establishment for those attempts; this is consistent with user/app cancellation behavior at the SIP layer.",
+      "confidence_pct": 95,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Direct SIP evidence: CANCEL is observed, followed by expected 200 (CANCEL) and 487 (INVITE) plus ACK within the same Call-ID.",
+      "evidence_refs": [
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP/CANCEL at 1726068029.302117 (Reason: SIP;cause=200;text=Call Rejected By User\"\")",
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP/200 Response to CANCEL at 1726068029.304146",
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP/487 Response at 1726068029.304147",
+        "Call-ID 1eEeXOyORCYzPJN6BcinNvKt: SIP/ACK at 1726068029.335153"
+      ]
+    },
+    {
+      "issue": "Non-standard/opaque call clearing reasons in BYE (vendor-specific)",
+      "description": "Some established dialogs (presence of SIP 200 Response and ACK after INVITE) are later cleared by BYE messages containing Reason strings with values such as 'X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E' or 'SIP;cause=503;text=... PS to CS Handover\"\"'. These are not standard SIP response codes in the BYE itself but rather Reason header content; their semantics cannot be confirmed from this capture alone.",
+      "impact": "Call termination occurs with opaque cause reporting, limiting standardized RCA and making it unclear whether termination was user-triggered, network-triggered, or interworking-related based solely on SIP here.",
+      "confidence_pct": 70,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "BYE messages and their Reason text are directly observed; however, the meaning of the Reason text tokens is not provable from the capture without a mapping/vendor definition.",
+      "evidence_refs": [
+        "Call-ID ffll43qaga4q76d36gy4344yyw4g0ggl@10.174.4.4: SIP/BYE at 1726070079.247469 (Reason: X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E)",
+        "Call-ID asbcM3hLVREVD5ydTfb0VA0EWIeM: SIP/BYE at 1726069583.069769 (Reason: SIP;cause=503;text=03077... PS to CS Handover\"\")"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Whether any SIP-layer network rejection occurred for the cancelled call attempts",
+      "reason": "The observed failures for many calls are driven by caller CANCEL; there is no observed SIP final error response (4xx/5xx/6xx) preceding the CANCEL in those dialogs.",
+      "additional_capture_needed": "SIP traces including any upstream/downstream legs (full end-to-end SIP path) to verify if any prior provisional/final responses or internal routing decisions triggered the user/app cancellation."
+    },
+    {
+      "aspect": "Media (ringback tone, RTP establishment, codec negotiation, audio quality)",
+      "reason": "Observation point is IMS signaling only; no RTP/SDP media is detected and codec negotiation is reported as absent.",
+      "additional_capture_needed": "User-plane/media capture (RTP/RTCP) and SIP bodies containing SDP at a point where SDP is visible to confirm early media/ringback behavior and media path establishment."
+    },
+    {
+      "aspect": "Meaning of 'X.int;reasoncode=0x00000000;add-info=0132.0001.0B2E' and other opaque Reason text values",
+      "reason": "The Reason text is vendor/proprietary/opaque; no standard mapping is provided in the evidence.",
+      "additional_capture_needed": "Vendor mapping/overlay for these Reason header formats or correlated system logs from the SIP elements generating the BYE."
+    },
+    {
+      "aspect": "Consistency of derived 'ringback_issue: NO_PROVISIONAL_RESPONSE' findings",
+      "reason": "Call message lists show 180/183 responses present for example calls, contradicting the media_findings flags.",
+      "additional_capture_needed": "Raw SIP message capture (full payloads) or corrected analytics output to validate whether 180/183 were actually received on the relevant leg and whether they contained SDP/early media indicators."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Validate analytics pipeline producing 'media_findings' (ringback/no provisional) against the actual SIP message list and raw packets; correct any leg-selection or parsing logic errors.",
+      "rationale": "The evidence contains 180/183 responses, yet the findings claim none; resolving this discrepancy is necessary before any ringback-related RCA can be trusted.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "For recurring CANCEL scenarios, correlate SIP CANCEL timestamps with client/app UI actions and device logs to confirm user/app-driven call abandonment vs upstream signaling triggers.",
+      "rationale": "CANCEL with Reason 'Call Rejected By User' is directly observed; confirming the initiating factor requires endpoint-side correlation not present in this capture.",
+      "category": "Optimization"
+    },
+    {
+      "priority": 3,
+      "action": "Obtain vendor documentation for BYE Reason formats (e.g., 'X.int;reasoncode=0x00000000;add-info=...') and establish a standardized mapping in reporting.",
+      "rationale": "BYE includes opaque Reason tokens; without a mapping, root-cause attribution is limited even though the signaling event is visible.",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP signaling exchanges (INVITE with 100/180/183, PRACK, UPDATE, and subsequent CANCEL/487 or BYE/200) are present and generally coherent at the transaction level; however, many call attempts end via caller CANCEL and some call clears include opaque Reason strings that cannot be interpreted from this capture alone.",
+    "user_plane_health": "Not observable at this capture point (IMS signaling only; no user-plane protocols captured).",
+    "voice_quality": "Not observable at this capture point (no RTP/RTCP captured; no SDP media detected).",
+    "cross_plane_correlation": "Not possible from this capture because only SIP signaling is present and no media/user-plane telemetry is available."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant U as Caller (UE side)\n    participant I as IMS Node\n    Note over U,I: SIP signaling observed (example: cancelled attempt)\n    U->>I: INVITE\n    I-->>U: 100 Trying\n    I-->>U: 183 Session Progress\n    U->>I: PRACK\n    I-->>U: 200 OK (PRACK)\n    U->>I: UPDATE\n    I-->>U: 200 OK (UPDATE)\n    I-->>U: 180 Ringing\n    U->>I: CANCEL (Reason: SIP,cause=200,text=Call Rejected By User\"\")\n    I-->>U: 200 OK (CANCEL)\n    I-->>U: 487 Request Terminated (INVITE)\n    U->>I: ACK"
+}

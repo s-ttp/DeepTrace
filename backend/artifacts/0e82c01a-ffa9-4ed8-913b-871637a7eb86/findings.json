@@ -1,0 +1,80 @@
+{
+  "network_overview": "A 70 ms control-plane snapshot shows one GTPv2-C Create Session Request/Response pair and two independent Diameter Command-272 (3GPP CCR/CCA) exchanges. One Diameter transaction ends with DIAMETER_END_USER_SERVICE_DENIED (4010), and the GTPv2-C response carries an unmapped cause 209.",
+  "classification": "REJECTED",
+  "health_score": 30,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "Gx/Gy Credit-Control Reject - Service Denied",
+      "spec_reference": "3GPP TS 29.212 \u00a75.6.2 / RFC 4006 Result-Code 4010",
+      "evidence": [
+        "Diameter Cmd-272 answer (pkt 5) Result-Code = 4010",
+        "Session-Id cmg01;017d48eb...",
+        "Direction 10.47.9.86 \u2192 10.47.27.65"
+      ],
+      "confidence": "HIGH",
+      "explanation": "Standard Gx/Gy CCA rejection when OCS/PCRF denies service (e.g., quota exhausted, roaming barred, or subscriber barred)."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Two separate Diameter sessions and one GTP-C session in 70 ms; all procedures fail.",
+      "severity": "critical",
+      "evidence": "Success rates 0 % for GTP-Msg-0x10, GTP-Msg-0x11, Cmd-272"
+    },
+    {
+      "category": "Protocol Error",
+      "finding": "GTPv2-C cause code 209 is not defined in 3GPP TS 29.274 v17.4.0.",
+      "severity": "warning",
+      "evidence": "Cause_label 'UNMAPPED(209)' in pkt 8"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Policy/Charging rejection prevents session creation",
+      "description": "Diameter Credit-Control answer (Cmd-272) returns Result-Code 4010 (DIAMETER_END_USER_SERVICE_DENIED), causing the bearer setup to be aborted.",
+      "impact": "Subscriber cannot establish EPS bearer; data/voice service blocked.",
+      "confidence_pct": 90,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Explicit 4010 code in captured CCA message; no subsequent GTP Create Session success observed.",
+      "evidence_refs": [
+        "Diameter pkt 5: Result-Code = 4010",
+        "Same millisecond GTP-C reject with cause 209"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Meaning of GTPv2-C cause 209",
+      "reason": "Code 209 is not mapped in public 3GPP or Wireshark tables; could be vendor-specific.",
+      "additional_capture_needed": "Vendor documentation or GTP-C trace from issuing node to clarify local cause table."
+    },
+    {
+      "aspect": "User-plane impact",
+      "reason": "No GTP-U or RTP packets observed at this capture point.",
+      "additional_capture_needed": "Parallel user-plane capture on S1-U/S5-U to confirm bearer establishment failure."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check OCS/PCRF logs for subscriber with session-id cmg01;017d48eb;62a19cd9;427012937268094-14db0835 to determine why service denied.",
+      "rationale": "4010 explicitly points to policy/charging function; logs will show quota, roaming, or profile issue.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Obtain vendor mapping for GTP-C cause 209 from S-GW/P-GW supplier to confirm exact failure reason.",
+      "rationale": "Ensures correct alignment between Diameter rejection and GTP-C cause propagated to MME.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "All observed control-plane procedures fail; Diameter 4010 and GTP-C unmapped cause 209 indicate systematic rejection.",
+    "user_plane_health": "Not observable at this capture point.",
+    "voice_quality": "Not observable (no SIP/RTP present).",
+    "cross_plane_correlation": "Diameter service denial immediately precedes GTP-C failure, suggesting policy control blocked bearer creation."
+  },
+  "sequence_diagram": "sequenceDiagram\n    autonumber\n    86.62.214.55->>10.47.17.114: GTPv2-C Create Session Request (teid 0x00000000)\n    10.47.27.65->>10.47.9.86: Diameter CCR (Cmd-272) sess-id cmg01,017d48eb...\n    10.47.9.86-->>10.47.27.65: Diameter CCA Result-Code 4010 (DIAMETER_END_USER_SERVICE_DENIED)\n    10.47.17.114-->>86.62.214.55: GTPv2-C Create Session Response cause 209 (UNMAPPED)\n"
+}

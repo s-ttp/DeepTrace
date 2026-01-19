@@ -1,0 +1,68 @@
+[
+  {
+    "packet_count": 4,
+    "total_bytes": 2432,
+    "tcp_flags": [
+      ""
+    ],
+    "analysis_events": [],
+    "src_ip": "10.47.22.58",
+    "dst_ip": "10.47.22.22",
+    "src_port": 65349,
+    "dst_port": 3868,
+    "transport": "TCP",
+    "duration": 0.0647268295288086,
+    "start_time": 1654758616.9849977,
+    "end_time": 1654758617.0497246,
+    "pps": 61.8,
+    "protocol": "Diameter",
+    "technology": "4G/LTE",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "4G/LTE"
+  },
+  {
+    "packet_count": 2,
+    "total_bytes": 234,
+    "gtp_teids": [
+      3023713083
+    ],
+    "analysis_events": [],
+    "src_ip": "86.62.214.55",
+    "dst_ip": "10.47.17.114",
+    "src_port": 2123,
+    "dst_port": 2123,
+    "transport": "UDP",
+    "duration": 0.0653383731842041,
+    "start_time": 1654758616.9844587,
+    "end_time": 1654758617.049797,
+    "pps": 30.61,
+    "protocol": "GTP-C",
+    "technology": "3G/4G",
+    "is_gtp": true,
+    "is_diameter": false,
+    "primary_tech": "3G/4G"
+  },
+  {
+    "packet_count": 2,
+    "total_bytes": 1144,
+    "tcp_flags": [
+      ""
+    ],
+    "analysis_events": [],
+    "src_ip": "10.47.27.65",
+    "dst_ip": "10.47.9.86",
+    "src_port": 65351,
+    "dst_port": 3868,
+    "transport": "TCP",
+    "duration": 0.010011672973632812,
+    "start_time": 1654758617.0250437,
+    "end_time": 1654758617.0350554,
+    "pps": 199.77,
+    "protocol": "Diameter",
+    "technology": "4G/LTE",
+    "is_gtp": false,
+    "is_diameter": false,
+    "primary_tech": "4G/LTE"
+  }
+]

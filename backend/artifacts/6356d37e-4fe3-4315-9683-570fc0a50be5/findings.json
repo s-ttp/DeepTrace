@@ -1,0 +1,83 @@
+{
+  "network_overview": "The capture contains only IMS-anchored VoLTE/VoNR SIP signaling over SCTP; no user-plane (RTP/UDP) or EPC/5GC control (GTP, Diameter) is present. All 20 voice calls failed\u20147 cancelled by the user, 13 timed-out waiting for 200 OK\u2014so the network delivered zero completed voice sessions during the 36-minute window.",
+  "health_score": 0,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % call failure rate; 0 % of INVITEs reached connected state",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No RTP bearer visible; media plane never established",
+      "severity": "critical"
+    },
+    {
+      "category": "Signalling",
+      "finding": "SIP 180/183 early-dialog responses arrive, but final 200 OK is either missing or arrives too late (> 8 s)",
+      "severity": "critical"
+    },
+    {
+      "category": "Protocol",
+      "finding": "13 calls terminated with internal BYE carrying 'PS to CS Handover' or 'User Triggered' cause, indicating bearer setup failure",
+      "severity": "critical"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "IMS bearer establishment timeout",
+      "description": "The SIP session proceeds normally (INVITE\u2192100\u2192183\u2192PRACK\u2192UPDATE\u2192180) but the downstream EPS/5GC dedicated-bearer activation never completes, so the S-CSCF never sends a 200 OK. After 8-860 s the UE or MME/AMF abandons the attempt and releases the call with BYE/487 or internal BYE.",
+      "impact": "All voice calls drop; subscribers experience \u2018call failed\u2019 or \u2018network busy\u2019; no revenue-generating traffic.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Call:M3hLVREVD5ydTfb0VA0EWIeM (duration 8.83 s, end_reason INVITE_SETUP_TIMEOUT)",
+        "Call:ffll43qaga4q76d36gy4344yyw4g0ggl (duration 859 s, BYE with PS-to-CS Handover)",
+        "Tx:pkt_27 (180 Response but no 200 OK within 8 s)"
+      ]
+    },
+    {
+      "issue": "Missing/late 200 OK from remote party",
+      "description": "For user-cancelled calls the 180 Ringing arrives, yet the called UE never answers; the originating UE therefore CANCELs after ~30 s. This points to either radio paging failure or the terminating side never receiving the alerting indication.",
+      "impact": "Perceived poor reachability; call-completion ratio drops.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "Call:1eEeXOyORCYzPJN6BcinNvKt (CANCEL after 36 s)",
+        "CANCEL cause 'Call Rejected By User'"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check MME/AMF logs for dedicated-bearer ACTIVATE DEFAULT/DEDICATED EPS BEARER CONTEXT REQUEST timeouts that match the failing call-ids",
+      "rationale": "Bearer timeout is the direct reason the S-CSCF withholds 200 OK; fixing QoS-flow/EPS-bearer setup will restore calls",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Verify PCRF Rx/Gx session establishment: ensure the AA-Request for media-flow AVPs is answered with AA-Answer=SUCCESS",
+      "rationale": "Missing PCC rules prevent bearer creation; align PCRF profile with voice QCI=1/5QI=1",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Validate paging and alerting on the terminating side: inspect S1-AP/NGAP Paging and RAN UE Context Setup for the called IMSIs",
+      "rationale": "Late or failed paging explains why 180 Ringing is sent but the user never actually hears the phone ring",
+      "category": "Performance"
+    },
+    {
+      "priority": 4,
+      "action": "Enable SIP INFO/UPDATE early-media negotiation and shorten T9 (ringing) timer from 60 s to 30 s to release resources faster",
+      "rationale": "Reduces hung-call duration and improves radio-resource utilisation while root-cause is fixed",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP over SCTP is syntactically clean (no 5xx, no retransmissions), but every dialog fails to reach 200 OK \u2192 state-machine incomplete",
+    "user_plane_health": "No RTP flows observed; dedicated bearer never established \u2192 user-plane totally absent",
+    "voice_quality": "No MOS scores possible\u2014no media stream; from signaling view, post-dial delay > 8 s violates ITU E.721 (< 3 s)",
+    "cross_plane_correlation": "SIP signaling succeeds up to 180/183, but absence of GTP-U/UDP-RTP shows bearer-setup failure is the blocking step"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE as 'UE (IPv6)'\n    participant P as 'P-CSCF'\n    participant S as 'S-CSCF'\n    participant MME as 'MME/AMF'\n    participant RAN as 'eNB/gNB'\n    UE->>P: INVITE\n    P->>S: INVITE\n    S->>MME: Create Bearer Request (QCI=1)\n    MME-->>S: (no response / timeout)\n    S->>UE: 183 Session Progress\n    S->>UE: 180 Ringing\n    Note over UE,S: 8-860 s wait\n    UE->>P: CANCEL (cause=200 Call Rejected By User)\n    P->>S: CANCEL\n    S->>UE: 487 Request Terminated\n    UE->>P: ACK"
+}

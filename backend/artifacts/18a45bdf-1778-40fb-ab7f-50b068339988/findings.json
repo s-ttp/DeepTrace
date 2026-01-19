@@ -1,0 +1,146 @@
+{
+  "network_overview": "Capture at a 5G core UPF-facing point shows PFCP (UDP/8805) control signaling with multiple request timeouts and several PFCP responses carrying cause \"Rule creation / modification Failure\" (cause=73). In parallel, GTPv2-C signaling includes responses with cause code 128 labeled \"S1-U Path Failure\", while Diameter (TCP/3868) exchanges include at least one DIAMETER_SUCCESS (result code 2001).",
+  "classification": "INCONCLUSIVE",
+  "health_score": 25,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "GTPv2-C procedure failure indicated by Cause = 128 (S1-U Path Failure)",
+      "spec_reference": "3GPP TS 29.274 (GTPv2-C) Cause IE (cause code 128)",
+      "evidence": [
+        "GTPv2-C message_type: GTP-Msg-0x15 with cause=128 (cause_label: S1-U Path Failure) at timestamp 1697719684.9878323 (frame 3)",
+        "GTPv2-C message_type: GTP-Msg-0x11 with cause=128 (cause_label: S1-U Path Failure) at timestamp 1697719712.8176448 (frame 32)"
+      ],
+      "confidence": "MEDIUM",
+      "explanation": "The capture contains explicit GTPv2-C responses carrying cause code 128 labeled \"S1-U Path Failure\". However, without the full decoded procedure context for message types 0x15/0x11 at this capture point, the exact impacted bearer/session procedure cannot be asserted beyond the presence of the failure cause."
+    },
+    {
+      "pattern_name": "PFCP session rule operation failure indicated by Cause = 73 (Rule creation / modification Failure)",
+      "spec_reference": "3GPP TS 29.244 (PFCP) Cause IE (cause value 73)",
+      "evidence": [
+        "PFCP message_type: PFCP-Msg-51 with cause=73 (cause_label: Rule creation / modification Failure) at timestamp 1697719688.1875544 (frame 9)",
+        "PFCP message_type: PFCP-Msg-51 with cause=73 (cause_label: Rule creation / modification Failure) at timestamp 1697719698.4896972 (frame 17)",
+        "PFCP message_type: PFCP-Msg-51 with cause=73 (cause_label: Rule creation / modification Failure) at timestamp 1697719708.8075771 (frame 25)"
+      ],
+      "confidence": "HIGH",
+      "explanation": "Multiple PFCP responses explicitly report cause 73 \"Rule creation / modification Failure\", which directly matches a PFCP cause-indicated failure pattern for rule creation/modification outcomes."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Control Plane Reliability (PFCP)",
+      "finding": "Multiple PFCP requests show status \"no_response\" (timeouts), indicating missing PFCP responses in the capture for those transactions.",
+      "severity": "critical",
+      "evidence": "PFCP-Msg-54 request _seq=852493 status=no_response at 1697719684.9877644 (frame 2); PFCP-Msg-50 requests _seq=852494/852495/852496/852497 status=no_response at 1697719688.1679258 (frame 8), 1697719698.4878926 (frame 16), 1697719708.7979476 (frame 24), 1697719712.7982283 (frame 30). Temporal anomalies list 5 PFCP request timeouts."
+    },
+    {
+      "category": "PFCP Session Outcomes",
+      "finding": "PFCP session responses include both failures (cause=73) and successes (cause=1), suggesting intermittent or per-session variability in rule operations.",
+      "severity": "warning",
+      "evidence": "Failures: PFCP-Msg-51 cause=73 at 1697719688.1875544 (frame 9), 1697719698.4896972 (frame 17), 1697719708.8075771 (frame 25). Successes: PFCP-Msg-55 cause=1 at 1697719685.0575454 (frame 4); PFCP-Msg-51 cause=1 at 1697719712.8175104 (frame 31)."
+    },
+    {
+      "category": "GTPv2-C Failure Cause Observed",
+      "finding": "GTPv2-C responses explicitly indicate \"S1-U Path Failure\" (cause=128) on two separate responses.",
+      "severity": "critical",
+      "evidence": "GTP-Msg-0x15 cause=128 at 1697719684.9878323 (frame 3) and GTP-Msg-0x11 cause=128 at 1697719712.8176448 (frame 32)."
+    },
+    {
+      "category": "Diameter Signaling",
+      "finding": "Diameter exchange includes DIAMETER_SUCCESS, indicating at least one successful Diameter transaction during the capture window.",
+      "severity": "info",
+      "evidence": "Diameter Cmd-272 response with cause=2001 (DIAMETER_SUCCESS) at 1697719688.1676185 (frame 7) for session_id cmg01;096ea8d2;65312588;427012938581585-005d0115."
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "PFCP rule creation/modification failures (Cause=73) on PFCP-Msg-51 responses",
+      "description": "Three PFCP-Msg-51 responses explicitly carry cause=73 labeled \"Rule creation / modification Failure\", indicating that the PFCP peer rejected or failed the requested rule operation for those sessions/SEIDs. This is directly evidenced in frames 9/17/25 with different SEIDs (0x...5d0110, 0x...5e0110, 0x...5f0110).",
+      "impact": "Can prevent correct programming of user-plane forwarding/rules for the affected PFCP sessions, potentially impacting data path establishment/modification for those sessions (exact service impact not directly observable in this capture).",
+      "confidence_pct": 92,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Direct evidence: PFCP responses with explicit failure cause 73 observed multiple times. The exact internal reason for the rule failure is not present in the provided fields (no additional IEs shown), so only the PFCP cause-level failure can be concluded.",
+      "evidence_refs": [
+        "PFCP PFCP-Msg-51 cause=73 (Rule creation / modification Failure) timestamp=1697719688.1875544 frame=9 seid=0x00000000005d0110",
+        "PFCP PFCP-Msg-51 cause=73 (Rule creation / modification Failure) timestamp=1697719698.4896972 frame=17 seid=0x00000000005e0110",
+        "PFCP PFCP-Msg-51 cause=73 (Rule creation / modification Failure) timestamp=1697719708.8075771 frame=25 seid=0x00000000005f0110"
+      ]
+    },
+    {
+      "issue": "PFCP request timeouts / missing responses in capture",
+      "description": "At least five PFCP requests are marked status \"no_response\" and are also flagged by temporal anomalies as PFCP request timed out (no response captured). This indicates PFCP response packets were not observed for those specific requests within the trace window.",
+      "impact": "Degraded PFCP control-plane reliability/visibility for session establishment/modification/association-type procedures represented by PFCP-Msg-54 and PFCP-Msg-50 in this capture; may lead to delayed or failed control-plane procedures depending on retransmission/timeout handling (retransmissions not explicitly listed in evidence).",
+      "confidence_pct": 80,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "Strong evidence that responses were not captured (status=no_response plus temporal anomaly entries). However, this capture alone cannot distinguish whether the peer truly did not respond versus responses being missed due to capture point/filters/asymmetric routing.",
+      "evidence_refs": [
+        "PFCP PFCP-Msg-54 request status=no_response timestamp=1697719684.9877644 frame=2 seq=852493 src=10.47.145.117 dst=10.130.9.119",
+        "PFCP PFCP-Msg-50 request status=no_response timestamp=1697719688.1679258 frame=8 seq=852494 src=10.47.145.117 dst=10.130.9.119",
+        "PFCP PFCP-Msg-50 request status=no_response timestamp=1697719698.4878926 frame=16 seq=852495 src=10.47.145.117 dst=10.130.9.119",
+        "PFCP PFCP-Msg-50 request status=no_response timestamp=1697719708.7979476 frame=24 seq=852496 src=10.47.145.117 dst=10.130.9.119",
+        "PFCP PFCP-Msg-50 request status=no_response timestamp=1697719712.7982283 frame=30 seq=852497 src=10.47.145.117 dst=10.130.9.119"
+      ]
+    },
+    {
+      "issue": "GTPv2-C failures indicated by Cause=128 (S1-U Path Failure)",
+      "description": "Two GTPv2-C responses include cause code 128 labeled \"S1-U Path Failure\". This is explicit error signaling from the GTPv2-C peer for the associated transactions.",
+      "impact": "Indicates failure related to the user-plane path as signaled by GTPv2-C cause 128; may block or degrade bearer/user-plane establishment/maintenance for the involved TEIDs (exact bearer/procedure not provided in the evidence).",
+      "confidence_pct": 78,
+      "confidence_level": "MEDIUM",
+      "confidence_justification": "Direct evidence of GTPv2-C failure cause 128 is present. The precise triggering condition and the specific 3GPP procedure (by fully decoded message name and IEs) are not provided, limiting confidence on the broader scenario beyond 'GTPv2-C reported S1-U Path Failure'.",
+      "evidence_refs": [
+        "GTPv2-C GTP-Msg-0x15 cause=128 (S1-U Path Failure) timestamp=1697719684.9878323 frame=3 teid=0x82000394 src=10.47.145.114 dst=10.47.145.231",
+        "GTPv2-C GTP-Msg-0x11 cause=128 (S1-U Path Failure) timestamp=1697719712.8176448 frame=32 teid=0x82100328 src=10.47.145.114 dst=10.47.145.231"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Whether PFCP timeouts reflect real peer non-response versus capture visibility gap",
+      "reason": "Evidence only shows 'status=no_response' and timeout flags; it does not prove the peer never transmitted a response.",
+      "additional_capture_needed": "Simultaneous captures on both PFCP endpoints (10.47.145.117 and 10.130.9.119) or at a SPAN/TAP that guarantees bidirectional visibility for UDP/8805 during the same timestamps."
+    },
+    {
+      "aspect": "Exact PFCP procedure names and rule identifiers (PDR/FAR/QER/URR) that failed",
+      "reason": "Provided evidence includes PFCP message types (PFCP-Msg-50/51/54/55) and Cause only; no PFCP IE-level details are included.",
+      "additional_capture_needed": "PFCP decode including IE details for the failing PFCP-Msg-51 responses (e.g., which rule operation failed) and the corresponding request contents."
+    },
+    {
+      "aspect": "End-to-end user-plane (GTP-U) forwarding impact and data-plane packet loss",
+      "reason": "While a 'GTP-U Tunnel' summary exists, no per-packet GTP-U user-plane outcomes or throughput/continuity evidence is included, and GTP-U is not listed among 'Protocols Detected'.",
+      "additional_capture_needed": "User-plane capture including GTP-U packet headers/payload at the same observation point and timeframe, plus correlation to the affected PFCP SEIDs/TEIDs."
+    },
+    {
+      "aspect": "Voice/IMS and media quality",
+      "reason": "No SIP/SDP/RTP observed; IMS/voice analysis section shows no calls and no media metrics.",
+      "additional_capture_needed": "Capture at an IMS/SIP signaling point for SIP/SDP and at a media plane point where RTP is visible, if voice service troubleshooting is required."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate PFCP rule failure cause=73 occurrences by correlating the failing PFCP-Msg-51 responses (frames 9/17/25) with the exact request contents (PFCP-Msg-50 _seq=852494/852495/852496) and rule IEs.",
+      "rationale": "Three explicit PFCP failures with cause 73 indicate rule programming problems; without IE-level details, the failing rule type/operation is not identifiable from this capture.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Validate PFCP bidirectional connectivity/visibility between 10.47.145.117 and 10.130.9.119 for UDP/8805 around timestamps 1697719684.987\u20131697719712.798, including packet capture on both ends.",
+      "rationale": "Five PFCP requests are marked no_response and flagged as timed out; dual-ended capture can distinguish true peer non-response from capture loss/asymmetric visibility.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 3,
+      "action": "Correlate GTPv2-C failures (cause=128) with the specific GTPv2-C procedures represented by message types 0x15 and 0x11 and the associated TEIDs (0x82000394, 0x82100328).",
+      "rationale": "Two explicit GTPv2-C responses signal 'S1-U Path Failure'; mapping these to the exact control-plane operation will narrow which bearer/session operation is failing.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "PFCP signaling shows mixed outcomes: explicit success causes (cause=1) are present (frames 4 and 31), but multiple PFCP-Msg-51 failures with cause=73 (frames 9/17/25) and multiple PFCP requests with no captured responses (frames 2/8/16/24/30) indicate degraded or partially observed PFCP control-plane behavior. GTPv2-C includes explicit failure causes (cause=128) on two responses (frames 3 and 32). Diameter shows at least one successful transaction (Cmd-272 result=2001) (frame 7).",
+    "user_plane_health": "Not determinable from the provided evidence at packet level: while GTPv2-C reports cause=128 (S1-U Path Failure), the capture does not provide user-plane (GTP-U) packet evidence/metrics to confirm actual data forwarding status.",
+    "voice_quality": "Not observable at this capture point (no SIP/SDP/RTP evidence provided).",
+    "cross_plane_correlation": "There is temporal proximity between PFCP control events and GTPv2-C failure indications (e.g., around 1697719684.987 both PFCP and GTPv2-C messages occur), but the capture lacks explicit common identifiers across planes (no subscriber IDs; limited decoded IEs), so definitive cross-plane causality cannot be proven from this evidence alone."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant GTP_A as 10.47.145.231\n    participant GTP_B as 10.47.145.114\n    participant PFCP_A as 10.47.145.117\n    participant PFCP_B as 10.130.9.119\n    participant DIA_A as 10.47.139.82\n    participant DIA_B as 10.47.137.86\n\n    Note over GTP_A,GTP_B: GTPv2-C\n    GTP_A->>GTP_B: GTP-Msg-0x14 (1697719684.9876096)\n    GTP_B-->>GTP_A: GTP-Msg-0x15 cause=128 \"S1-U Path Failure\" (1697719684.9878323)\n\n    Note over PFCP_A,PFCP_B: PFCP\n    PFCP_A->>PFCP_B: PFCP-Msg-54 request seq=852493 (1697719684.9877644) [no_response]\n    PFCP_B-->>PFCP_A: PFCP-Msg-55 cause=1 \"Request accepted(success)\" seq=852493 (1697719685.0575454)\n\n    Note over DIA_A,DIA_B: Diameter\n    DIA_A->>DIA_B: Cmd-272 request (1697719688.1583421)\n    DIA_B-->>DIA_A: Cmd-272 answer result=2001 \"DIAMETER_SUCCESS\" (1697719688.1676185)\n\n    Note over PFCP_A,PFCP_B: PFCP session transactions\n    PFCP_A->>PFCP_B: PFCP-Msg-50 request seq=852494 (1697719688.1679258) [no_response]\n    PFCP_B-->>PFCP_A: PFCP-Msg-51 cause=73 \"Rule creation / modification Failure\" seq=852494 (1697719688.1875544)\n\n    PFCP_A->>PFCP_B: PFCP-Msg-50 request seq=852495 (1697719698.4878926) [no_response]\n    PFCP_B-->>PFCP_A: PFCP-Msg-51 cause=73 \"Rule creation / modification Failure\" seq=852495 (1697719698.4896972)\n\n    PFCP_A->>PFCP_B: PFCP-Msg-50 request seq=852496 (1697719708.7979476) [no_response]\n    PFCP_B-->>PFCP_A: PFCP-Msg-51 cause=73 \"Rule creation / modification Failure\" seq=852496 (1697719708.8075771)\n\n    PFCP_A->>PFCP_B: PFCP-Msg-50 request seq=852497 (1697719712.7982283) [no_response]\n    PFCP_B-->>PFCP_A: PFCP-Msg-51 cause=1 \"Request accepted(success)\" seq=852497 (1697719712.8175104)\n\n    Note over GTP_A,GTP_B: GTPv2-C\n    GTP_A->>GTP_B: GTP-Msg-0x10 (1697719712.797625)\n    GTP_B-->>GTP_A: GTP-Msg-0x11 cause=128 \"S1-U Path Failure\" (1697719712.8176448)"
+}

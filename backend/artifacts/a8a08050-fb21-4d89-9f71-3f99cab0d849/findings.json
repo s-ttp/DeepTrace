@@ -1,0 +1,86 @@
+{
+  "network_overview": "A single Diameter Gx/Gy/S6a-type signaling exchange between 10.193.1.134 and 10.47.73.86 shows one request (Cmd-8388636) answered with DIAMETER_UNABLE_TO_DELIVER (3002), yielding 0 % success for this procedure. No user-plane, SIP, or other protocols were captured.",
+  "classification": "REJECTED",
+  "health_score": 25,
+  "health_status": "critical",
+  "pattern_matches": [
+    {
+      "pattern_name": "Diameter Unable-to-Delivery (RFC-defined base error)",
+      "spec_reference": "RFC 6733 \u00a77.3 \u2013 Result-Code 3002",
+      "evidence": [
+        "Response message: Cmd-8388636",
+        "Result-Code AVP: 3002",
+        "Wireshark label: DIAMETER_UNABLE_TO_DELIVER"
+      ],
+      "confidence": "HIGH",
+      "explanation": "The server explicitly returned 3002, indicating it could not deliver the request to the final destination (downstream peer or internal service)."
+    }
+  ],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Exactly two request attempts and one failure response in 3 s; no retries after 3002",
+      "severity": "warning",
+      "evidence": "Procedure Cmd-8388636 attempts: 2, success_rate: 0.0"
+    },
+    {
+      "category": "Protocol",
+      "finding": "Only Diameter Base protocol traffic observed; no GTP, SIP, or user-plane packets",
+      "severity": "info",
+      "evidence": "Protocols Detected: Diameter"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "Downstream Diameter peer unreachable or service unavailable",
+      "description": "Responding node (10.47.73.86) returned 3002, meaning it could not forward the request to the intended final destination or internal application.",
+      "impact": "Policy or authentication procedure failed; subscriber service (e.g., bearer activation, policy install) rejected.",
+      "confidence_pct": 92,
+      "confidence_level": "HIGH",
+      "confidence_justification": "Explicit 3002 result code in answer message per RFC 6733.",
+      "evidence_refs": [
+        "Diameter answer: Cmd-8388636",
+        "Result-Code: 3002",
+        "Timestamp: 1722044079.351457"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Which Diameter application (Gx, Gy, S6a, Rx, etc.) failed",
+      "reason": "Application-ID AVP not shown in decoded packets",
+      "additional_capture_needed": "Full AVP decode including Application-ID, Auth-Application-ID, or specific command name"
+    },
+    {
+      "aspect": "Whether subscriber ultimately gained service",
+      "reason": "No subsequent signaling captured",
+      "additional_capture_needed": "Longer capture on same interface or end-to-end trace including GTP/SIP"
+    },
+    {
+      "aspect": "Root reason for delivery failure (network, config, or peer outage)",
+      "reason": "Only base result-code 3002 observed; no error-diagnostics AVP",
+      "additional_capture_needed": "Diameter answer with Error-Message or Failed-AVP AVPs, plus logs from responding node"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check downstream peer reachability and service status on node 10.47.73.86 for the Command code 8388636",
+      "rationale": "3002 explicitly flags delivery failure; peer or internal service may be down or mis-configured.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Collect full Diameter decode (include Application-ID, Route-Record, Error-Message AVPs) to identify exact service impacted",
+      "rationale": "Determines whether policy, charging, or authentication layer is affected.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "One Diameter procedure failed with 3002; no other signaling observed.",
+    "user_plane_health": "No GTP-U or user-plane traffic captured.",
+    "voice_quality": "Not observable at this capture point.",
+    "cross_plane_correlation": "Only control-plane Diameter present; no user-plane or SIP correlation possible."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant A as 10.193.1.134\n    participant B as 10.47.73.86\n    A->>B: Cmd-8388636 Request (pkt_1)\n    B->>A: Cmd-8388636 Answer 3002 DIAMETER_UNABLE_TO_DELIVER (pkt_3)"
+}

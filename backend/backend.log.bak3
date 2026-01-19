@@ -1,0 +1,63 @@
+INFO:     Will watch for changes in these directories: ['/home/sttp/pcap/backend']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [697754] using WatchFiles
+Diameter support not available
+INFO:     Started server process [697756]
+INFO:     Waiting for application startup.
+2026-01-12 07:15:08,704 - app.main - INFO - Upload directory: /home/sttp/pcap/backend/uploads
+2026-01-12 07:15:08,704 - app.main - INFO - PCAP Analyzer backend started
+INFO:     Application startup complete.
+INFO:     127.0.0.1:47868 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47880 - "GET / HTTP/1.1" 200 OK
+INFO:     None:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     None:0 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     None:0 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+2026-01-12 07:21:30,734 - app.main - INFO - Saved file: /home/sttp/pcap/backend/uploads/cec9155a-6a57-4fb9-aa20-2ac324289eaf_Zaidan_case.pcap (533797 bytes)
+INFO:     None:0 - "POST /api/upload HTTP/1.1" 200 OK
+2026-01-12 07:21:30,739 - app.pcap_parser - INFO - Parsing PCAP file: /home/sttp/pcap/backend/uploads/cec9155a-6a57-4fb9-aa20-2ac324289eaf_Zaidan_case.pcap
+INFO:     ('127.0.0.1', 38300) - "WebSocket /ws/cec9155a-6a57-4fb9-aa20-2ac324289eaf" [accepted]
+2026-01-12 07:21:30,916 - app.main - INFO - WebSocket connected for job cec9155a-6a57-4fb9-aa20-2ac324289eaf
+INFO:     connection open
+2026-01-12 07:21:30,973 - app.pcap_parser - INFO - Parsed 379 packets
+2026-01-12 07:21:30,973 - app.pcap_parser - INFO - Technologies detected: {'VoLTE/VoNR': 379}
+2026-01-12 07:21:30,974 - app.telecom_analyzer - INFO - Analyzing 379 packets into flows
+2026-01-12 07:21:30,976 - app.telecom_analyzer - INFO - Identified 74 unique flows
+2026-01-12 07:21:30,978 - app.telecom_analyzer - INFO - Extracting message sequence from 379 packets
+2026-01-12 07:21:30,978 - app.telecom_analyzer - INFO - Limiting sequence to 100 messages (from 281)
+2026-01-12 07:21:30,978 - app.telecom_analyzer - INFO - Extracted 100 messages for sequence diagram
+2026-01-12 07:21:30,979 - app.llm_service - INFO - Enriching 74 flows with LLM insights
+2026-01-12 07:21:30,979 - app.llm_service - ERROR - Error getting LLM insight for flow 0: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,980 - app.llm_service - ERROR - Error getting LLM insight for flow 1: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,980 - app.llm_service - ERROR - Error getting LLM insight for flow 2: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,980 - app.llm_service - ERROR - Error getting LLM insight for flow 3: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,980 - app.llm_service - ERROR - Error getting LLM insight for flow 4: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,981 - app.llm_service - ERROR - Error getting LLM insight for flow 5: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,981 - app.llm_service - ERROR - Error getting LLM insight for flow 6: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,981 - app.llm_service - ERROR - Error getting LLM insight for flow 7: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,981 - app.llm_service - ERROR - Error getting LLM insight for flow 8: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,982 - app.llm_service - ERROR - Error getting LLM insight for flow 9: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,982 - app.llm_service - INFO - Performing enhanced root cause analysis
+2026-01-12 07:21:30,983 - app.llm_service - ERROR - Error performing RCA: Client.__init__() got an unexpected keyword argument 'proxies'
+2026-01-12 07:21:30,983 - app.main - INFO - Analysis completed for job cec9155a-6a57-4fb9-aa20-2ac324289eaf
+2026-01-12 07:21:30,984 - app.main - INFO - Cleaned up file: /home/sttp/pcap/backend/uploads/cec9155a-6a57-4fb9-aa20-2ac324289eaf_Zaidan_case.pcap
+INFO:     None:0 - "GET /api/analysis/cec9155a-6a57-4fb9-aa20-2ac324289eaf HTTP/1.1" 200 OK
+INFO:     connection closed
+2026-01-12 07:21:31,548 - app.main - INFO - WebSocket disconnected for job cec9155a-6a57-4fb9-aa20-2ac324289eaf
+WARNING:  WatchFiles detected changes in 'app/llm_service.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-01-12 07:22:07,547 - app.main - INFO - PCAP Analyzer backend shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [697756]
+Diameter support not available
+INFO:     Started server process [700486]
+INFO:     Waiting for application startup.
+2026-01-12 07:22:10,292 - app.main - INFO - Upload directory: /home/sttp/pcap/backend/uploads
+2026-01-12 07:22:10,292 - app.main - INFO - PCAP Analyzer backend started
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-01-12 07:22:17,515 - app.main - INFO - PCAP Analyzer backend shutting down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [700486]
+INFO:     Stopping reloader process [697754]

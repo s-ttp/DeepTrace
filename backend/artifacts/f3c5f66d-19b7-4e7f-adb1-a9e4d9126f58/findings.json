@@ -1,0 +1,65 @@
+{
+  "network_overview": "The trace contains only LTE control-plane signaling (S1-AP, Diameter, GTP-C) and CG-NAT DNS-proxy bursts; no SIP, RTP, or VoLTE traffic is present. All observed transactions completed successfully (Diameter Result-Code 2001), and SCTP associations remained stable for 11 min.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 85,
+  "health_status": "healthy",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Zero SIP or RTP messages captured; only LTE control-plane and DNS-proxy traffic observed",
+      "severity": "info",
+      "evidence": "Voice & IMS Analysis: 'total_calls': 0, 'total_registrations': 0"
+    },
+    {
+      "category": "Diameter",
+      "finding": "All Diameter exchanges terminated with Result-Code 2001 (DIAMETER_SUCCESS)",
+      "severity": "info",
+      "evidence": "pkt_4, pkt_16, pkt_20, pkt_40, pkt_52, pkt_56: 'cause': '2001'"
+    },
+    {
+      "category": "S1-AP",
+      "finding": "S1-AP procedures 11, 13, 23 exchanged repeatedly without any failure cause codes",
+      "severity": "info",
+      "evidence": "Multiple Proc-11/13/23 messages with 'cause': null"
+    }
+  ],
+  "root_causes": [],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Voice/IMS call establishment or failure",
+      "reason": "No SIP INVITE, 183 Session Progress, 180 Ringing, or any RTP packets observed",
+      "additional_capture_needed": "Capture on SGi or N6 interface including UDP ports 5060, 5061, 16384-32767 for SIP and RTP"
+    },
+    {
+      "aspect": "User-plane bearer path for voice",
+      "reason": "GTP-U tunnels not present in trace (0 GTP tunnels reported)",
+      "additional_capture_needed": "Capture on S1-U or S5-U interfaces to verify GTP-U bearers carrying RTP"
+    },
+    {
+      "aspect": "Media quality (MOS, packet loss, jitter)",
+      "reason": "No RTP statistics available",
+      "additional_capture_needed": "RTP flow capture with RTCP packets for quality metrics"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Collect simultaneous capture on SGi/N6 interface covering SIP and RTP ports",
+      "rationale": "Current trace lacks any IMS signaling or media; voice analysis impossible without these protocols",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Verify LTE bearer establishment by capturing GTP-C Create Session Request/Response on S11 or S5",
+      "rationale": "Although GTP-C is present, no Create Session messages appear; need to confirm dedicated bearer for voice",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "LTE control-plane stable: SCTP links remain up, Diameter returns only 2001 success, S1-AP procedures show no error causes",
+    "user_plane_health": "Only CG-NAT DNS-proxy bursts observed (100.65.x.x loopback); no GTP-U or user-plane bearer traffic visible",
+    "voice_quality": "Not observable at this capture point",
+    "cross_plane_correlation": "No correlation possible: user-plane (DNS) and control-plane (S1-AP/Diameter) flows are disjoint and no voice bearer established"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant eNB\n    participant MME\n    participant HSS\n    participant DNS\n    eNB->>MME: S1-AP Proc-11\n    MME->>eNB: S1-AP Proc-13\n    eNB->>MME: S1-AP Proc-11\n    MME->>eNB: S1-AP Proc-13\n    MME->>HSS: Diameter Cmd-318\n    HSS->>MME: Diameter Cmd-318 (2001)\n    MME->>HSS: Diameter Cmd-316\n    HSS->>MME: Diameter Cmd-316 (2001)\n    DNS->>DNS: UDP/53 query/response (CG-NAT)"
+}

@@ -1,0 +1,23 @@
+{
+  "total_flows": 7,
+  "total_packets": 48,
+  "total_bytes": 40722,
+  "protocols": [
+    "SIP"
+  ],
+  "capture_point": {
+    "point": "IMS_SIGNALING",
+    "description": "IMS signaling plane only (no media captured)",
+    "expected": [
+      "SIP",
+      "Diameter"
+    ],
+    "not_expected": [
+      "RTP",
+      "RTCP"
+    ]
+  },
+  "duration": 119.78900003433228,
+  "start_time": 1765805290.957,
+  "end_time": 1765805410.746
+}

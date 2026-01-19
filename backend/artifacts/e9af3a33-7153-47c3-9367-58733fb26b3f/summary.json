@@ -1,0 +1,28 @@
+{
+  "total_flows": 10,
+  "total_packets": 118,
+  "total_bytes": 27773,
+  "protocols": [
+    "PFCP",
+    "GTP-C",
+    "Diameter",
+    "RADIUS",
+    "UDP"
+  ],
+  "capture_point": {
+    "point": "5G_CORE_UPF",
+    "description": "5G User Plane Function or SMF interface",
+    "expected": [
+      "PFCP",
+      "GTP-U"
+    ],
+    "not_expected": [
+      "RTP",
+      "SIP",
+      "NGAP"
+    ]
+  },
+  "duration": 224.5661175251007,
+  "start_time": 1653373617.6872916,
+  "end_time": 1653373842.2534091
+}

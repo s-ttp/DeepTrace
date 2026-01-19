@@ -1,0 +1,18 @@
+[
+  {
+    "session_key": "unknown:sip/voip_session:6",
+    "generation": "Unknown",
+    "type": "SIP/VoIP Session",
+    "description": "Session Initiation Protocol (Voice/Video calls)",
+    "identifiers": {},
+    "time_start": "N/A",
+    "time_end": "N/A",
+    "kpis": {
+      "packet_count": 36,
+      "byte_count": 26596,
+      "flow_count": 6
+    },
+    "linked_transactions": [],
+    "linked_flows": []
+  }
+]

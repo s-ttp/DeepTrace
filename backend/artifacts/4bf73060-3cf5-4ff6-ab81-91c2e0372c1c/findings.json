@@ -1,0 +1,77 @@
+{
+  "network_overview": "The capture contains only SIP signaling for two parallel VoLTE call attempts that both fail: the first pair is cancelled after ~26 s, the second pair times out after <1 s. All four calls stop at 180 Ringing; no RTP bearer is established, so no voice path ever exists.",
+  "health_score": 25,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % of INVITE transactions end in failure; 4\u00d7407 Proxy Authentication Required followed by 2\u00d7487 Request Terminated and 2\u00d7 invite-timeout.",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No RTP flows detected; media bearer never set up, hence zero voice minutes delivered.",
+      "severity": "critical"
+    },
+    {
+      "category": "Security",
+      "finding": "Every first INVITE is challenged with 407, but second INVITE carries no visible Proxy-Authorization header in the decoded trace, suggesting UE or P-CSCF does not retry with credentials.",
+      "severity": "warning"
+    },
+    {
+      "category": "Performance",
+      "finding": "Post-180 Ringing, neither call receives 200 OK within ~25 s, causing user-initiated CANCEL or client timeout; indicates downstream S-CSCF/TAS or called-party alerting problem.",
+      "severity": "warning"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "IMS Authentication Loop",
+      "description": "P-CSCF challenges each initial INVITE with SIP 407, but the re-INVITE either omits credentials or the S-CSCF rejects them, so the call cannot proceed to 200 OK.",
+      "impact": "All VoLTE calls fail at setup phase; subscribers cannot originate voice.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_5 Cause:'Q.850;cause=21,SIP;cause=407'",
+        "Tx:pkt_7 identical cause",
+        "Tx:pkt_33 & pkt_35 same pattern"
+      ]
+    },
+    {
+      "issue": "Called-Party Never Answers",
+      "description": "After 180 Ringing is sent, no 200 OK arrives within 25 s, forcing the originating UE to CANCEL or timeout.",
+      "impact": "Even if authentication were fixed, calls would still fail to connect; affects answer-seizure ratio.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "Call:mpikejikyhqht1wy4jqyiqtjphnthjpw 180@5291.9 \u2192 CANCEL@5316.8",
+        "Call:asbcmpikejikyhqht1wy4jqyiqtjphnthjpw identical timing"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check P-CSCF/UE logs to verify that the second INVITE carries a valid Proxy-Authorization header; if missing, update UE IMS configuration or ISIM credentials.",
+      "rationale": "Eliminates the 407 loop and allows INVITE to reach S-CSCF.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Trace the downstream leg (Mw/Mg) from S-CSCF toward called-party IMS/TAS to discover why 200 OK is never returned after 180 Ringing.",
+      "rationale": "Fixes the second failure point once authentication succeeds.",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Validate that the Rx interface between P-CSCF and PCRF creates the dedicated bearer (QCI=1) so RTP resources are reserved even before 200 OK.",
+      "rationale": "Ensures media path is ready and reduces post-answer delay.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "Control-plane SIP messages flow correctly up to 180 Ringing, but every transaction is terminated prematurely (487 or timeout).",
+    "user_plane_health": "No GTP-U tunnels, no RTP streams; data plane is idle.",
+    "voice_quality": "No bearer established \u2192 no MOS, packet-loss, or jitter metrics; service is unusable.",
+    "cross_plane_correlation": "Signaling failure prevents bearer creation; therefore user-plane remains silent."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    UE->>P-CSCF: INVITE\n    P-CSCF->>UE: 100 Trying\n    P-CSCF->>UE: 407 Proxy Auth Required\n    UE->>P-CSCF: ACK\n    UE->>P-CSCF: INVITE (no creds visible)\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF->>P-CSCF: 183 Session Progress\n    P-CSCF->>UE: 183 Session Progress\n    UE->>P-CSCF: PRACK\n    S-CSCF->>P-CSCF: 200 PRACK\n    S-CSCF->>P-CSCF: 180 Ringing\n    P-CSCF->>UE: 180 Ringing\n    Note right of S-CSCF: No 200 OK for 25 s\n    UE->>P-CSCF: CANCEL (cause 16)\n    P-CSCF->>UE: 200 CANCEL\n    P-CSCF->>UE: 487 Request Terminated"
+}

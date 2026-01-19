@@ -1,0 +1,83 @@
+{
+  "network_overview": "The trace shows a 3-hour control-plane snapshot with healthy SCTP associations carrying S1-AP, Diameter and M3UA/SS7 signalling; no GTP-U tunnels, RTP or SIP were observed, so user-plane or IMS traffic is not visible at this point.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 85,
+  "health_status": "warning",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "All GTPv2-C Create-Bearer requests (msg 0x31) return cause 128 (unknown) with zero successful responses",
+      "severity": "warning",
+      "evidence": "8 attempts, 0 % success, cause '128' in frames 15, 57, 59, 96"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "Diameter commands 318/316/324/317 all receive result-code 2001 (DIAMETER_SUCCESS) without any failure or retransmission",
+      "severity": "info",
+      "evidence": "18x 2001 answers for each command, no errors or timeouts"
+    },
+    {
+      "category": "Traffic Pattern",
+      "finding": "S1-AP Proc-11/13/23 exchanges occur regularly with no cause codes or failure indications",
+      "severity": "info",
+      "evidence": "144 Proc-11 and 108 Proc-13 messages, zero error causes"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "GTP-C bearer-setup rejections",
+      "description": "Every observed Create-Bearer Request (GTPv2-C msg 0x31) is answered with cause 128 (vendor-specific/unknown) instead of a normal success or 3GPP-defined rejection",
+      "impact": "Prevents dedicated-bearer establishment for VoLTE or data services",
+      "confidence": "HIGH",
+      "evidence_refs": [
+        "Frame 15: GTPv2-C Create-Bearer Request (0x31) \u2192 cause 128",
+        "Frame 57: same pair, same cause",
+        "KPI: 8 attempts, 0 % success"
+      ]
+    }
+  ],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Voice/IMS call outcome",
+      "reason": "No SIP, RTP, or IMS AKA traffic observed",
+      "additional_capture_needed": "Mirror on P-CSCF or capture SGi interface to see SIP/RTP"
+    },
+    {
+      "aspect": "User-plane connectivity",
+      "reason": "GTP-U tunnels (0 present) and user-plane frames are absent",
+      "additional_capture_needed": "Capture on S1-U or S5/S8 user-plane links"
+    },
+    {
+      "aspect": "Root cause of GTP-C cause 128",
+      "reason": "Response contains only cause value 128 without further Information Element",
+      "additional_capture_needed": "GTP-C logs from S-GW or P-GW to map vendor cause 128"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Investigate S-GW/P-GW logs for vendor-specific meaning of GTP-C cause 128 and rectify bearer-setup failures",
+      "rationale": "All 8 Create-Bearer attempts fail with the same undocumented cause, blocking services that need dedicated bearers",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Collect simultaneous user-plane capture on S1-U/S5-U to confirm whether any traffic is forwarded despite control-plane rejections",
+      "rationale": "Bearer-setup failure may still leave default bearer; user-plane visibility will clarify service impact",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Enable detailed GTP-C tracing to capture full Information Elements in failed responses",
+      "rationale": "Additional IEs (e.g. 'Offending IE') would pinpoint whether QoS, APN-AMBR or TFT is rejected",
+      "category": "Reliability"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SCTP associations stable, Diameter success 100 %, S1-AP procedures without error; only GTP-C bearer-setup shows systematic rejection",
+    "user_plane_health": "No GTP-U tunnels observed; user-plane health not measurable from this capture",
+    "voice_quality": "Not observable - no RTP or SIP present",
+    "cross_plane_correlation": "Cannot correlate user-plane with signaling because user-plane is absent in trace"
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant eNB\n    participant MME\n    participant SGW\n    participant PGW\n    participant HSS\n    Note over eNB,HSS: Only control-plane shown\n    eNB->>MME: S1-AP Proc-11 (UE-associated)\n    MME->>HSS: Diameter Cmd-318 (Update-Location)\n    HSS-->>MME: 2001 OK\n    MME->>SGW: GTPv2-C Create-Bearer Req (0x31)\n    SGW-->>MME: Cause 128 (failure)\n    MME->>eNB: S1-AP Proc-13 (context release)\n    Note right of MME: Bearer setup fails repeatedly"
+}

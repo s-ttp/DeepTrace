@@ -1,0 +1,60 @@
+{
+  "network_overview": "The capture contains a single low-volume signaling flow using SCTP between 10.47.82.11:9082 and 10.1.244.8:9082 (11 packets, 1,636 bytes) over ~21.09 seconds. No higher-layer telecom signaling protocols or message decodes are present in the provided evidence, so only transport-level observations can be made.",
+  "classification": "INCONCLUSIVE",
+  "health_score": 55,
+  "health_status": "warning",
+  "pattern_matches": [],
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "Single SCTP signaling flow observed with low packet rate (11 packets over ~21.09s, ~0.52 pps), which is consistent with a small control-plane exchange at the transport level; no application-layer messages are provided to validate purpose or outcome.",
+      "severity": "info",
+      "evidence": "Flow: SCTP 10.47.82.11:9082 -> 10.1.244.8:9082, packet_count=11, total_bytes=1636, duration=21.089831s, pps=0.52"
+    },
+    {
+      "category": "Protocol Coverage",
+      "finding": "Only SCTP is detected. No decoded telecom application protocol messages (e.g., S1AP/NGAP or others) are explicitly present in the evidence, so procedure success/failure and any 3GPP cause-based diagnosis are not observable.",
+      "severity": "warning",
+      "evidence": "Protocols Detected: SCTP; No expert warnings; No procedure statistics; No deep transactions available"
+    }
+  ],
+  "root_causes": [],
+  "inconclusive_aspects": [
+    {
+      "aspect": "Whether any 3GPP signaling procedure succeeded or failed",
+      "reason": "The evidence includes only SCTP flow statistics; no application-layer message types, procedure identifiers, or reject/response codes are provided.",
+      "additional_capture_needed": "A decode containing the SCTP payload/application protocol messages (e.g., the actual signaling layer carried over SCTP) with timestamps and any response/cause fields."
+    },
+    {
+      "aspect": "Call/session establishment outcome (if this relates to a voice or data procedure)",
+      "reason": "No SIP, no SDP, no RTP, and no call classifications are present; total_calls=0 in the provided IMS/voice analysis.",
+      "additional_capture_needed": "Capture including the relevant application signaling for the service under test (at minimum, decoded message traces above SCTP) and, if voice is in scope, media-plane visibility at the appropriate observation point."
+    },
+    {
+      "aspect": "Transport-level failure indicators within SCTP (e.g., association setup failure vs. normal exchange)",
+      "reason": "No SCTP chunk/message details (INIT/INIT-ACK/ABORT/HEARTBEAT/ERROR) are explicitly provided\u2014only aggregate flow counters and timing.",
+      "additional_capture_needed": "Packet-level SCTP decode showing chunk types and any SCTP error indications, alongside both directions of the flow with complete packet capture."
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Re-export or re-run decoding to include SCTP payload/application-layer protocol dissection (beyond flow statistics) with message names and any cause/response fields.",
+      "rationale": "Root cause and 3GPP pattern matching require explicit message-level evidence; current evidence only confirms SCTP transport presence and basic flow characteristics.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Confirm the observation point and capture both directions consistently for the involved network elements (10.47.82.11 and 10.1.244.8) during the same time window.",
+      "rationale": "Without observation point context and full bidirectional decode, procedure outcomes and failure localization cannot be determined from transport statistics alone.",
+      "category": "Performance"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SCTP signaling transport is observed (single flow, low packet rate). No explicit SCTP error events or higher-layer success/failure indicators are present in the provided evidence, so signaling outcome is not determinable.",
+    "user_plane_health": "Not observable at this capture point (no user-plane protocols/tunnels are present; GTP tunnels reported as 0).",
+    "voice_quality": "Not observable at this capture point (no SIP/SDP/RTP present; no RTP quality metrics available).",
+    "cross_plane_correlation": "Not possible from this evidence because only SCTP transport flow statistics are available and no user-plane or voice/media layer data is present."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant A as 10.47.82.11:9082\n    participant B as 10.1.244.8:9082\n    Note over A,B: Observed: SCTP flow only (no application-layer messages provided)\n    A->>B: SCTP packets (part of 11 total packets)\n    B-->>A: SCTP packets (part of 11 total packets)\n    Note over A,B: Time window ~21.09s (start=1662883143.011988, end=1662883164.101819)"
+}

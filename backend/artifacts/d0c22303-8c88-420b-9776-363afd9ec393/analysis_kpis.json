@@ -1,0 +1,120 @@
+{
+  "procedure_kpis": {
+    "Cmd-272": {
+      "attempts": 16,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "2001": 8
+      }
+    },
+    "PFCP-Msg-50": {
+      "attempts": 196,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-51": {
+      "attempts": 196,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Request Accepted": 196
+      }
+    },
+    "PFCP-Msg-52": {
+      "attempts": 1458,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-53": {
+      "attempts": 1268,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Request Accepted": 1268
+      }
+    },
+    "PFCP-Msg-56": {
+      "attempts": 586,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-57": {
+      "attempts": 586,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Request Accepted": 586
+      }
+    },
+    "PFCP-Msg-54": {
+      "attempts": 196,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "PFCP-Msg-55": {
+      "attempts": 196,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Request Accepted": 196
+      }
+    },
+    "GTP-Msg-0xf0": {
+      "attempts": 271,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "GTP-Msg-0x12": {
+      "attempts": 56,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "GTP-Msg-0x13": {
+      "attempts": 44,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Unknown Cause 128": 44
+      }
+    },
+    "Cmd-258": {
+      "attempts": 4,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "2001": 1,
+        "2002": 1
+      }
+    },
+    "GTP-Msg-0x14": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {}
+    },
+    "GTP-Msg-0x15": {
+      "attempts": 1,
+      "success_rate": 0.0,
+      "avg_latency_ms": 0,
+      "top_causes": {
+        "Unknown Cause 128": 1
+      }
+    }
+  },
+  "time_window_diffs": {},
+  "sctp_stats": "-------------------------------------------- SCTP Statistics --------------------------------------------------------------------------\n|  Total packets RX/TX 0\n---------------------------------------------------------------------------------------------------------------------------------------\n|   Source IP   |PortA|    Dest. IP   |PortB|  DATA  |  SACK  |  HBEAT |HBEATACK|  INIT  | INITACK| COOKIE |COOKIACK| ABORT  |  ERROR |\n---------------------------------------------------------------------------------------------------------------------------------------\n---------------------------------------------------------------------------------------------------------------------------------------\n",
+  "voice_stats": {
+    "trace_type": "EMPTY_OR_UNKNOWN",
+    "total_calls": 0,
+    "total_registrations": 0,
+    "dropped": 0,
+    "media_issues": 0
+  }
+}

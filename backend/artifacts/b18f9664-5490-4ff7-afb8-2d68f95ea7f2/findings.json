@@ -1,0 +1,78 @@
+{
+  "network_overview": "The capture contains only IMS-based VoLTE/VoNR SIP signaling between P-CSCF and S-CSCF/AS nodes; every call leg is challenged with SIP 407 (proxy authentication required) and later cancelled or times-out, so no bearer (RTP) is ever established. No GTP, Diameter, or media-plane traffic is present, indicating a pure control-plane recording on the Mw/N6 interface.",
+  "health_score": 25,
+  "health_status": "critical",
+  "observations": [
+    {
+      "category": "Traffic Pattern",
+      "finding": "100 % of INVITEs receive 407 Proxy Authentication Required; second INVITE (with credentials) is sent but every call is later CANCELLED or times-out, so 0 % call-completion rate.",
+      "severity": "critical"
+    },
+    {
+      "category": "Voice Quality",
+      "finding": "No RTP flows detected; media bearer never established, hence voice service is effectively unavailable during the trace window.",
+      "severity": "critical"
+    },
+    {
+      "category": "Protocol Efficiency",
+      "finding": "SIP transaction RTTs are healthy (< 100 ms) and no retransmissions occur, so transport and IMS routing are not the bottleneck.",
+      "severity": "info"
+    }
+  ],
+  "root_causes": [
+    {
+      "issue": "IMS Authentication Challenge Without Follow-Through",
+      "description": "All initial INVITEs are rejected with SIP 407, indicating the P-CSCF is correctly requesting authentication. However, after the second INVITE (with credentials) reaches 180 Ringing, the originating side abandons the call (CANCEL) or lets it time-out, suggesting an upstream service (MMTel AS, ENUM, or called-party reachability) never returns 200 OK.",
+      "impact": "Complete call-setup failure; subscribers cannot originate or receive voice calls.",
+      "confidence": "high",
+      "evidence_refs": [
+        "Tx:pkt_5 & pkt_7 (407 Response)",
+        "Call:mpikejikyhqht1wy4jqyiqtjphnthjpw@UAC (CANCEL after 180)",
+        "Call:mwm1jee111y4q4epknlnph0ynmypej4h@UAC (time-out after 180)"
+      ]
+    },
+    {
+      "issue": "Missing Diameter/Rx Interaction",
+      "description": "No Diameter traffic is captured, so the PCRF is never contacted for bearer-authorization; without an Rx AAR the PGW/UPF will not establish a dedicated QCI=1 bearer, preventing the network from sending a 183 with SDP that would trigger radio access to reserve resources.",
+      "impact": "Bearer reservation failure leads to prolonged alerting state and eventual cancellation.",
+      "confidence": "medium",
+      "evidence_refs": [
+        "Stats: total_diameter_sessions=0",
+        "Media_findings: []"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Check S-CSCF/MMTel logs for the two call-ids that reached 180 Ringing; verify why neither received a final 200 OK within 25 s (normal post-alerting timeout).",
+      "rationale": "Identifies whether the failure is in the terminating MMTel AS, called-party IMS registration, or PSTN gateway.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 2,
+      "action": "Enable Rx interface capture between P-CSCF and PCRF; confirm an AAR is sent immediately after the second INVITE and that the PCRF returns an AAA with QCI=1 and acceptable bit-rate.",
+      "rationale": "Bearer authorization must succeed before the terminating side can be alerted with guaranteed QoS; absence of Rx explains bearer-less 180 state.",
+      "category": "Performance"
+    },
+    {
+      "priority": 3,
+      "action": "Validate that the P-CSCF adds the correct P-Access-Network-Info and P-Charging-Vector headers so downstream nodes can resolve the calling party\u2019s MMTel profile and terminating domain.",
+      "rationale": "Missing or malformed headers can cause AS to silently drop the call, leaving it in alerting state.",
+      "category": "Reliability"
+    },
+    {
+      "priority": 4,
+      "action": "Review timer settings: T alerting (typically 30 s) and T guard (15 s) in S-CSCF; reduce if operator policy allows faster timeout to release resources earlier.",
+      "rationale": "Shortens resource reservation window and improves perceived service responsiveness while root cause is fixed.",
+      "category": "Optimization"
+    }
+  ],
+  "session_analysis": {
+    "signaling_health": "SIP transactions are syntactically correct and timely; however every call ends in CANCEL or time-out, so control-plane success rate is 0 %.",
+    "user_plane_health": "No GTP-U or RTP detected; dedicated bearer (QCI=1) is never established, hence user-plane is non-existent.",
+    "voice_quality": "No media stream means MOS, packet-loss, and jitter cannot be assessed; from a subscriber perspective voice service is unavailable.",
+    "cross_plane_correlation": "Signaling reaches 180 Ringing but absence of Rx/Diameter prevents bearer creation; without the bearer the call cannot complete, correlating control-plane progress with user-plane failure."
+  },
+  "sequence_diagram": "sequenceDiagram\n    participant UE\n    participant P-CSCF\n    participant S-CSCF\n    participant MMTelAS\n    UE->>P-CSCF: INVITE (no auth)\n    P-CSCF->>UE: 407 Proxy Auth Required\n    UE->>P-CSCF: ACK\n    UE->>P-CSCF: INVITE (with auth)\n    P-CSCF->>S-CSCF: INVITE\n    S-CSCF->>MMTelAS: INVITE\n    MMTelAS-->>S-CSCF: 180 Ringing\n    S-CSCF-->>P-CSCF: 180 Ringing\n    P-CSCF-->>UE: 180 Ringing\n    Note over UE,MMTelAS: Bearer auth missing, no 200 OK\n    UE->>P-CSCF: CANCEL (after 25 s)\n    P-CSCF->>UE: 200 CANCEL OK\n    P-CSCF->>UE: 487 Request Terminated\n    UE->>P-CSCF: ACK"
+}

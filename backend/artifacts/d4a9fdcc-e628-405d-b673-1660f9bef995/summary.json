@@ -1,0 +1,12 @@
+{
+  "total_flows": 20,
+  "total_packets": 941,
+  "total_bytes": 59196,
+  "protocols": [
+    "UDP",
+    "GTP-U"
+  ],
+  "duration": 945.2443478107452,
+  "start_time": 1660755570.5548584,
+  "end_time": 1660756515.7992063
+}
