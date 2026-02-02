@@ -73,7 +73,7 @@ function App() {
     // Let's try using the backend URL directly for WS since standard proxying might be flaky for WS without setupProxy.js
     // Reverting to the logic that matches the backend location we know: localhost:8000 
     // Since I am setting "proxy": "http://localhost:8000", the backend IS at localhost:8000.
-    const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/${id}`);
+    const ws = new WebSocket(wsUrl);
 
     // NOTE: If the user is on a cloud IDE, they might not be able to connect to :8000 directly.
     // They are seeing "Failed to fetch" which is HTTP. 
@@ -175,9 +175,8 @@ function App() {
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
-            <div className="logo-icon">📡</div>
             <div className="logo-text">
-              <h1>NetTrace AI</h1>
+              <h1>DeepTrace</h1>
               <p className="tagline">Intelligent Network Analysis</p>
             </div>
           </div>
@@ -211,7 +210,7 @@ function App() {
               <p className="eyebrow">AI-Powered Diagnostics</p>
               <h2>Deep Analysis for Mobile Network Traffic</h2>
               <p className="lead">
-                Upload your PCAP captures and let NetTrace AI detect protocols across 2G through 5G, identify session patterns, and deliver AI-powered root cause analysis with actionable recommendations.
+                Upload your PCAP captures and let DeepTrace detect protocols across 2G through 5G, identify session patterns, and deliver AI-powered root cause analysis with actionable recommendations.
               </p>
               <ul className="hero-list">
                 <li>Full mobile stack: 2G/GSM → 3G/UMTS → 4G/LTE → 5G/NR</li>

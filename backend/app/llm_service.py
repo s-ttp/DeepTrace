@@ -20,26 +20,9 @@ def get_llm_client():
     """Get or create LLM client"""
     global client
     if client is None:
-        # Check for OpenAI Key first for GPT-5.2 support
-        openai_key = os.getenv("OPENAI_API_KEY")
-        if openai_key:
-             # Use Standard OpenAI Configuration
-             base_url = os.getenv("OPENAI_BASE_URL") # None by default (uses api.openai.com)
-             http_client = httpx.Client()
-             client = OpenAI(
-                api_key=openai_key,
-                base_url=base_url,
-                http_client=http_client
-             )
-             logger.info(f"Initialized OpenAI client (Standard Base URL)")
-        
-        else:
-            # Fallback to Moonshot/Kimi
-            moonshot_key = os.getenv("MOONSHOT_API_KEY")
-            if not moonshot_key:
-                 logger.error("No MOONSHOT_API_KEY or OPENAI_API_KEY found")
-                 raise ValueError("API Key not set")
-            
+        # Check for Moonshot/Kimi Key first (primary provider)
+        moonshot_key = os.getenv("MOONSHOT_API_KEY")
+        if moonshot_key:
             http_client = httpx.Client()
             base_url = os.getenv("KIMI_API_BASE_URL", "https://api.moonshot.ai/v1")
             client = OpenAI(
@@ -48,6 +31,22 @@ def get_llm_client():
                 http_client=http_client
             )
             logger.info(f"Initialized Moonshot client (Base: {base_url})")
+        
+        else:
+            # Fallback to OpenAI
+            openai_key = os.getenv("OPENAI_API_KEY")
+            if not openai_key:
+                 logger.error("No MOONSHOT_API_KEY or OPENAI_API_KEY found")
+                 raise ValueError("API Key not set")
+            
+            http_client = httpx.Client()
+            base_url = os.getenv("OPENAI_BASE_URL")  # None by default
+            client = OpenAI(
+                api_key=openai_key,
+                base_url=base_url,
+                http_client=http_client
+            )
+            logger.info(f"Initialized OpenAI client")
     
     return client
 
@@ -73,9 +72,8 @@ async def enrich_with_llm(flows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     logger.info(f"Enriching {len(flows)} flows with LLM insights")
     
     enriched = []
-    # Use configured model or default to gpt-5.2 for OpenAI, kimi for Moonshot
-    default_model = "gpt-5.2" if os.getenv("OPENAI_API_KEY") else "kimi-k2-turbo-preview"
-    model = os.getenv("OPENAI_MODEL", os.getenv("KIMI_MODEL", default_model))
+    # Use configured model (Kimi K2 Turbo as default)
+    model = os.getenv("KIMI_MODEL", "kimi-k2.5")
     
     # Only analyze top flows to limit API calls (POC)
     flows_to_analyze = flows[:10]
@@ -112,32 +110,20 @@ Provide a brief analysis (2-3 sentences) covering:
             else:
                 llm_client = get_llm_client()
                 
-                # GPT-5.2 API usage
-                if model == "gpt-5.2":
-                    completion = llm_client.responses.create(
-                        model=model,
-                        input=f"You are a telecom network expert. {prompt}",
-                        reasoning={
-                            "effort": "low" # Quick insight
+                # Use chat.completions API (compatible with all models)
+                completion = llm_client.chat.completions.create(
+                    model=model,
+                    messages=[
+                        {
+                            "role": "system", 
+                            "content": "You are a telecom network expert specializing in mobile network protocols across all generations (2G/GSM, 3G/UMTS, 4G/LTE, 5G/NR). You understand protocols like GTP-U/C, PFCP, Diameter, S1-AP, NGAP, SIP, RTP, M3UA, SS7, and RADIUS. Analyze network flows concisely and provide actionable insights about mobile network traffic."
                         },
-                        max_output_tokens=500
-                    )
-                    insight = completion.output_text
-                else:
-                    # Legacy/Standard API
-                    completion = llm_client.chat.completions.create(
-                        model=model,
-                        messages=[
-                            {
-                                "role": "system", 
-                                "content": "You are a telecom network expert specializing in mobile network protocols across all generations (2G/GSM, 3G/UMTS, 4G/LTE, 5G/NR). You understand protocols like GTP-U/C, PFCP, Diameter, S1-AP, NGAP, SIP, RTP, M3UA, SS7, and RADIUS. Analyze network flows concisely and provide actionable insights about mobile network traffic."
-                            },
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.6,
-                        max_tokens=200
-                    )
-                    insight = completion.choices[0].message.content
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=1,
+                    max_completion_tokens=200
+                )
+                insight = completion.choices[0].message.content
                 flow_copy["llm_insight"] = insight
                 llm_cache[cache_key] = insight
                 logger.debug(f"LLM insight generated for flow {i}")
@@ -360,8 +346,7 @@ async def root_cause_analysis(
     """
     logger.info("Performing enhanced root cause analysis")
     
-    default_model = "gpt-5.2" if os.getenv("OPENAI_API_KEY") else "kimi-k2-turbo-preview"
-    model = os.getenv("OPENAI_MODEL", os.getenv("KIMI_MODEL", default_model))
+    model = os.getenv("KIMI_MODEL", "kimi-k2.5")
     
     # Build summary if not provided
     if summary is None:
@@ -573,115 +558,47 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
     try:
         llm_client = get_llm_client()
         
-        if False and model == "gpt-5.2": # Disabled to prevent duplication, using logic in else block
-             completion = llm_client.responses.create(
-                model=model,
-                input=f"You are an expert telecom network analyst AI.\n\n{prompt}\n\nYou MUST respond with valid JSON only.",
-                reasoning={
-                    "effort": "high" # Deep RCA
-                }
-            )
-             response_text = completion.output_text.strip()
-        else:
-            # Prepare arguments
-            completion_args = {
-                "model": model,
-                "messages": [
-                    {
-                        "role": "system", 
-                        "content": "You are an expert telecom network analyst AI. You MUST respond with valid JSON only. Your expertise covers: Mobile network protocols (GTP-U/C, PFCP, Diameter, S1-AP, NGAP), Voice protocols (SIP, RTP, VoLTE), Legacy (SS7, M3UA), and Supporting protocols (DNS, RADIUS, DHCP, HTTP/2 for 5G-SBI). Analyze network captures with precision and provide actionable insights."
-                    },
-                    {"role": "user", "content": prompt}
-                ],
-                "temperature": 0.3
-            }
-            
-            if model == "gpt-5.2":
-                 # Use new responses API for GPT-5.2
-                 # Construct input prompt from messages
-                 system_msg = next((m["content"] for m in completion_args["messages"] if m["role"] == "system"), "")
-                 user_msg = next((m["content"] for m in completion_args["messages"] if m["role"] == "user"), "")
-                 full_input = f"{system_msg}\n\nUser Request:\n{user_msg}"
-                 
-                 # Determine adaptive reasoning effort
-                 reasoning_effort = determine_reasoning_effort(
-                     failure_summary=failure_summary,
-                     voice_context=voice_context,
-                     flows=flows,
-                     expert_findings=expert_findings
-                 )
-                 logger.info(f"Adaptive reasoning effort: {reasoning_effort}")
-                 
-                 # Build context for tool calls
-                 tool_context = {
-                     "rtp_quality_context": rtp_quality_context,
-                     "failure_summary": failure_summary,
-                     "voice_context": voice_context,
-                     "flows": flows,
-                     "handover_context": handover_context
-                 }
-                 
-                 # Initial API call with tools
-                 completion = llm_client.responses.create(
-                    model=model,
-                    input=full_input,
-                    reasoning={"effort": reasoning_effort},
-                    max_output_tokens=8000,
-                    tools=RCA_TOOLS
-                 )
-                 
-                 # Handle tool calling loop (max 3 iterations to prevent infinite loops)
-                 max_tool_iterations = 3
-                 iteration = 0
-                 
-                 while iteration < max_tool_iterations:
-                     # Check if model wants to call tools
-                     tool_calls = []
-                     for output_item in completion.output:
-                         if hasattr(output_item, 'type') and output_item.type == 'function_call':
-                             tool_calls.append(output_item)
-                     
-                     if not tool_calls:
-                         # No tool calls, model is done
-                         break
-                     
-                     logger.info(f"Tool calls requested: {len(tool_calls)}")
-                     
-                     # Process each tool call and collect results
-                     tool_results = []
-                     for tool_call in tool_calls:
-                         tool_name = tool_call.name
-                         tool_args = json.loads(tool_call.arguments) if isinstance(tool_call.arguments, str) else tool_call.arguments
-                         result = handle_tool_call(tool_name, tool_args, tool_context)
-                         tool_results.append({
-                             "type": "function_call_output",
-                             "call_id": tool_call.call_id,
-                             "output": result
-                         })
-                     
-                     # Continue conversation with tool results
-                     completion = llm_client.responses.create(
-                         model=model,
-                         previous_response_id=completion.id,
-                         input=tool_results,
-                         reasoning={"effort": reasoning_effort},
-                         max_output_tokens=8000,
-                         tools=RCA_TOOLS
-                     )
-                     
-                     iteration += 1
-                 
-                 response_text = completion.output_text.strip()
-            
-            else:
-                # O1 models use max_completion_tokens
-                if model.startswith("o1"):
-                    completion_args["max_completion_tokens"] = 3000
-                else:
-                    completion_args["max_tokens"] = 3000
+        # Determine adaptive reasoning effort for logging
+        reasoning_effort = determine_reasoning_effort(
+            failure_summary=failure_summary,
+            voice_context=voice_context,
+            flows=flows,
+            expert_findings=expert_findings
+        )
+        logger.info(f"Adaptive reasoning effort: {reasoning_effort}")
+        
+        # Use chat.completions API (compatible with all models)
+        completion_args = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "system", 
+                    "content": "You are an expert telecom network analyst AI specializing in 3GPP mobile networks. You MUST respond with valid JSON only. Your expertise covers: Mobile network protocols (GTP-U/C, PFCP, Diameter, S1-AP, NGAP), Voice protocols (SIP, RTP, VoLTE/VoNR), Legacy (SS7, M3UA), and Supporting protocols (DNS, RADIUS, DHCP, HTTP/2 for 5G-SBI). IMPORTANT: Provide DETAILED, COMPREHENSIVE analysis with extensive explanations. For each root cause, include: 1) Full technical description with protocol-level details, 2) Multiple specific evidence references with frame numbers and timestamps, 3) Detailed confidence justification citing exact message fields, 4) Impact assessment. Reference 3GPP specifications (TS 24.301, TS 29.274, TS 29.244, TS 38.413, TS 29.229) and RFCs where applicable. Generate thorough inconclusive_aspects explaining what cannot be determined and why."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 1
+        }
+        
+        # Use max_completion_tokens - increased for detailed analysis
+        completion_args["max_completion_tokens"] = 8000
 
-                completion = llm_client.chat.completions.create(**completion_args)
-                response_text = completion.choices[0].message.content.strip()
+        completion = llm_client.chat.completions.create(**completion_args)
+        
+        # Extract response with null check
+        raw_content = completion.choices[0].message.content
+        logger.info(f"LLM response type: {type(raw_content)}, length: {len(raw_content) if raw_content else 0}")
+        
+        if raw_content is None:
+            logger.warning("LLM returned None content, model may require reasoning=True or different parameters")
+            # Check for reasoning content (for o-series models)
+            if hasattr(completion.choices[0].message, 'reasoning_content') and completion.choices[0].message.reasoning_content:
+                raw_content = completion.choices[0].message.reasoning_content
+                logger.info(f"Using reasoning_content instead, length: {len(raw_content)}")
+            else:
+                raw_content = ""
+        
+        response_text = raw_content.strip() if raw_content else ""
         
         # Try to parse JSON response
         try:
@@ -704,8 +621,20 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
                 raise ValueError(error_msg)
             # Sanitize Mermaid code to prevent syntax errors
             if "sequence_diagram" in rca_data and isinstance(rca_data["sequence_diagram"], str):
-                 # Semicolons can break Mermaid message parsing, replace with commas
-                 rca_data["sequence_diagram"] = rca_data["sequence_diagram"].replace(";", ",")
+                diagram = rca_data["sequence_diagram"]
+                # Fix common Mermaid syntax issues:
+                # 1. Semicolons break message parsing
+                diagram = diagram.replace(";", ",")
+                # 2. Bidirectional arrows <--> are invalid, use ->> instead
+                diagram = diagram.replace("<-->", "->>")
+                diagram = diagram.replace("<->", "->>")
+                # 3. Percent signs break Mermaid (comment marker)
+                diagram = diagram.replace("%", " percent")
+                # 4. Curly braces can break parsing
+                diagram = diagram.replace("{", "(").replace("}", ")")
+                # 5. Hash/pound signs can cause issues
+                diagram = diagram.replace("#", "")
+                rca_data["sequence_diagram"] = diagram
                  
             logger.info("Enhanced structured RCA completed")
             return rca_data

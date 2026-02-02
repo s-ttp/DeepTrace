@@ -140,7 +140,20 @@ function FlowDiagram({ messageSequence = [], maxMessages = 50 }) {
     // Declare participants (endpoints) with aliases
     endpoints.forEach(ip => {
       const alias = endpointAliases[ip];
-      code += `    participant ${alias} as ${ip}\n`;
+      // Find a message where this IP is src or dst to get the resolved name from backend
+      const nameMsg = filteredMessages.find(m => m.src_ip === ip || m.dst_ip === ip);
+      let displayName = ip;
+
+      if (nameMsg) {
+        // Use backend-resolved names (from NodeClassifier or resolver)
+        if (nameMsg.src_ip === ip && nameMsg.src_name && nameMsg.src_name !== ip) {
+          displayName = nameMsg.src_name;
+        } else if (nameMsg.dst_ip === ip && nameMsg.dst_name && nameMsg.dst_name !== ip) {
+          displayName = nameMsg.dst_name;
+        }
+      }
+
+      code += `    participant ${alias} as ${displayName}\n`;
     });
 
     code += '\n';

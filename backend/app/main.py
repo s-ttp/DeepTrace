@@ -134,7 +134,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI app
 app = FastAPI(
-    title="NetTrace AI",
+    title="DeepTrace",
     description="Intelligent Mobile Network Analysis - Advanced PCAP analyzer for 2G/3G/4G/5G protocols with AI-powered insights",
     version="1.0.0",
     lifespan=lifespan
@@ -277,6 +277,11 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
                 subscriber_llm_context = format_subscriber_llm(subscriber_data)
                 logger.info(f"Subscriber analysis: {subscriber_data.get('subscriber_count', 0)} subscribers identified")
                 
+                # Node Classification (Hybrid: Deterministic + LLM)
+                from .node_classifier import classify_network_nodes
+                node_map = await classify_network_nodes(tshark_transactions)
+                logger.info(f"Node classification: {len(node_map)} nodes identified")
+                
             except Exception as e:
                 logger.warning(f"TShark transaction build failed: {e}")
                 procedure_kpis = {}
@@ -285,6 +290,8 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
                 temporal_llm_context = ""
                 subscriber_data = {}
                 subscriber_llm_context = ""
+                node_map = {}
+
         
             # --- New Voice/IMS Analysis Integration ---
             try:
@@ -429,72 +436,55 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
                 transfer_context = ""
                 handover_context = ""
             
-        # Prepare Artifacts
-        artifact_path = ARTIFACTS_DIR / job_id
-        artifact_path.mkdir(parents=True, exist_ok=True)
+        # Re-extract message sequence with classified node names
+        if node_map:
+            logger.info("Re-extracting message sequence with classified nodes")
+            message_sequence = await asyncio.to_thread(extract_message_sequence, packets, 100, node_map)
         
-        # Save Voice Artifacts
-        with open(artifact_path / "calls.json", "w") as f:
-            json.dump(voice_calls, f, indent=2, default=str)
+        # NOTE: Artifact saving disabled for privacy - results stored in-memory only
+        # artifact_path = ARTIFACTS_DIR / job_id
+        # artifact_path.mkdir(parents=True, exist_ok=True)
         
-        with open(artifact_path / "registrations.json", "w") as f:
-            json.dump(registrations, f, indent=2, default=str)
-            
-        with open(artifact_path / "media_streams.json", "w") as f:
-             json.dump(media_streams, f, indent=2, default=str)
-             
-        with open(artifact_path / "media_findings.json", "w") as f:
-            json.dump(media_findings, f, indent=2)
+        # Voice Artifacts - disabled
+        # with open(artifact_path / "calls.json", "w") as f:
+        #     json.dump(voice_calls, f, indent=2, default=str)
+        # with open(artifact_path / "registrations.json", "w") as f:
+        #     json.dump(registrations, f, indent=2, default=str)
+        # with open(artifact_path / "media_streams.json", "w") as f:
+        #     json.dump(media_streams, f, indent=2, default=str)
+        # with open(artifact_path / "media_findings.json", "w") as f:
+        #     json.dump(media_findings, f, indent=2)
 
-        # 1. Summary.json
-        with open(artifact_path / "summary.json", "w") as f:
-            json.dump(summary, f, indent=2)
-            
-        # 2. Flows.json
-        with open(artifact_path / "flows.json", "w") as f:
-            # Clean flows for JSON (remove sets if any remain, though analyze_flows cleans up)
-            json.dump(flows, f, indent=2, default=str)
-            
-        # 3. Sessions.json (Formatted)
-        formatted_sessions = [format_session_for_export(s) for s in sessions]
-        with open(artifact_path / "sessions.json", "w") as f:
-            json.dump(formatted_sessions, f, indent=2, default=str)
-            
-        # 4. Transactions.json (Enriched)
-        # Combine Scapy message sequence and TShark structured transactions
-        transactions_artifact = {
-             "scapy_sequence": message_sequence,
-             "deep_transactions": tshark_transactions,
-             "voice_analysis": {
-                 "trace_type": trace_type,
-                 "calls": voice_calls,
-                 "registrations": registrations,
-                 "findings": media_findings
-             }
-        }
-        with open(artifact_path / "transactions.json", "w") as f:
-             json.dump(transactions_artifact, f, indent=2, default=str)
-             
-        # 5. Expert Findings (TShark Mode A)
+        # Summary, Flows, Sessions, Transactions - disabled
+        # with open(artifact_path / "summary.json", "w") as f:
+        #     json.dump(summary, f, indent=2)
+        # with open(artifact_path / "flows.json", "w") as f:
+        #     json.dump(flows, f, indent=2, default=str)
+        # formatted_sessions = [format_session_for_export(s) for s in sessions]
+        # with open(artifact_path / "sessions.json", "w") as f:
+        #     json.dump(formatted_sessions, f, indent=2, default=str)
+        # transactions_artifact = {...}
+        # with open(artifact_path / "transactions.json", "w") as f:
+        #     json.dump(transactions_artifact, f, indent=2, default=str)
+        
+        # Expert Findings - keep in memory for results
         expert_findings = tshark_stats.get("expert_info", [])
         if media_findings:
-            # Merge Voice Media Findings into Expert Findings for frontend visibility
-             for mf in media_findings:
-                 expert_findings.append({
-                     "severity": "Warning" if mf["severity"] == "warning" else "Error",
-                     "group": "Voice Quality",
-                     "protocol": "VoIP",
-                     "summary": mf["title"] + ": " + mf["description"]
-                 })
-                 
-        with open(artifact_path / "expert_findings.json", "w") as f:
-            json.dump(expert_findings, f, indent=2)
-            
-        # 6. Analytics KPIs
+            for mf in media_findings:
+                expert_findings.append({
+                    "severity": "Warning" if mf["severity"] == "warning" else "Error",
+                    "group": "Voice Quality",
+                    "protocol": "VoIP",
+                    "summary": mf["title"] + ": " + mf["description"]
+                })
+        # with open(artifact_path / "expert_findings.json", "w") as f:
+        #     json.dump(expert_findings, f, indent=2)
+        
+        # Analytics KPIs - keep in memory
         analytics_artifact = {
             "procedure_kpis": procedure_kpis,
             "time_window_diffs": time_window_diffs,
-            "sctp_stats": tshark_stats.get("sctp_stats"), # Raw text or parsed
+            "sctp_stats": tshark_stats.get("sctp_stats"),
             "voice_stats": {
                 "trace_type": trace_type,
                 "total_calls": len(voice_calls),
@@ -503,8 +493,8 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
                 "media_issues": len(media_findings)
             }
         }
-        with open(artifact_path / "analysis_kpis.json", "w") as f:
-            json.dump(analytics_artifact, f, indent=2)
+        # with open(artifact_path / "analysis_kpis.json", "w") as f:
+        #     json.dump(analytics_artifact, f, indent=2)
              
         # 7. Findings.json (RCA)
         # Update RCA call to include new context
@@ -588,10 +578,11 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
             vendor_context=vendor_context if vendor_context else None
         )
 
-        with open(artifact_path / "findings.json", "w") as f:
-            json.dump(rca, f, indent=2)
-            
-        logger.info(f"Artifacts saved to {artifact_path}")
+        # Findings.json - disabled (RCA kept in memory)
+        # with open(artifact_path / "findings.json", "w") as f:
+        #     json.dump(rca, f, indent=2)
+        # logger.info(f"Artifacts saved to {artifact_path}")
+        logger.info("Analysis complete (artifacts disabled)")
 
         
         # Store results

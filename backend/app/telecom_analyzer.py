@@ -6,6 +6,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from .resolution_service import resolver
+
 
 def analyze_flows(packets: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -519,7 +521,71 @@ def format_session_for_export(session: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 100) -> List[Dict[str, Any]]:
+def _build_dynamic_map(packets: List[Dict[str, Any]]) -> Dict[str, str]:
+    """
+    Build a dynamic IP-to-Role map based on observed signaling behavior.
+    """
+    dynamic_map = {}
+    
+    for pkt in packets:
+        src = pkt.get("src_ip")
+        if not src:
+            continue
+            
+        # SIP Heuristics
+        if "sip" in pkt:
+            status = pkt["sip"].get("status_code")
+            method = pkt["sip"].get("method")
+            
+            # SIP Server sending challenges or errors
+            # Safe str conversion for status check
+            if status:
+                s_status = str(status)
+                if s_status.startswith("4") or s_status.startswith("5") or s_status.startswith("6"):
+                    if src not in dynamic_map:
+                        dynamic_map[src] = "SIP_Server"
+            
+            # SIP Client (UE or Proxy) sending Requests
+            if method and method in ["REGISTER", "INVITE"]:
+                # If we haven't identified it as a server yet, it might be a UE or P-CSCF
+                if src not in dynamic_map:
+                    dynamic_map[src] = "SIP_Endpoint"
+
+        # GTP-C Heuristics
+        if "gtp" in pkt and pkt["gtp"].get("type"):
+            gtp_type = pkt["gtp"]["type"]
+            msg_str = str(gtp_type)
+            
+            # Create Session Request (32) -> MME/SGSN
+            if "Create Session Request" in msg_str or msg_str == "32":
+                dynamic_map[src] = "MME"
+            # Create Session Response (33) -> SGW/PGW
+            elif "Create Session Response" in msg_str or msg_str == "33":
+                dynamic_map[src] = "SGW/PGW"
+            # Echo Request (1/20) - Could be any GTP node, but marks it as Core
+            elif msg_str in ["1", "20", "Echo Request"]:
+                if src not in dynamic_map:
+                    dynamic_map[src] = "GTP_Node"
+        
+        # PFCP Heuristics (Sx/N4 Interface)
+        if "pfcp" in pkt:
+            pfcp_type = pkt["pfcp"].get("message_type", "")
+            msg_str = str(pfcp_type)
+            
+            # Request -> CP Function (SMF, SGW-C) usually sends to UP, but UP sends to CP too.
+            # Association Setup Request -> Node declaring itself
+            # This is hard to distinguish without parsing IE Node ID, but we can tag as PFCP_Entity
+            if src not in dynamic_map:
+                dynamic_map[src] = "PFCP_Entity"
+            
+        # DNS Heuristics
+        if pkt.get("protocol") == "DNS" or pkt.get("dst_port") == 53 or pkt.get("src_port") == 53:
+            if src not in dynamic_map:
+                dynamic_map[src] = "DNS_Server" if pkt.get("src_port") == 53 else "DNS_Client"
+                
+    return dynamic_map
+
+def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 100, node_map: Dict[str, str] = None) -> List[Dict[str, Any]]:
     """
     Extract time-ordered message sequence for sequence diagram visualization.
     Groups messages by endpoint pairs and includes protocol information.
@@ -527,6 +593,7 @@ def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 
     Args:
         packets: List of parsed packet dictionaries
         max_messages: Maximum number of messages to return (for performance)
+        node_map: Optional IP->NodeType mapping from NodeClassifier
         
     Returns:
         List of message dictionaries sorted by timestamp
@@ -535,12 +602,38 @@ def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 
     
     messages = []
     
+    # Use provided node_map or empty dict
+    if node_map is None:
+        node_map = {}
+    
+    # Build dynamic map using heuristics as fallback
+    dynamic_map = _build_dynamic_map(packets)
+    logger.info(f"Dynamic Map Inferred: {dynamic_map}")
+    logger.info(f"Classifier Node Map: {len(node_map)} entries")
+
     for pkt in packets:
         # Skip packets without IP info
         if "src_ip" not in pkt or "dst_ip" not in pkt:
             continue
         
-        # Extract key information
+        src_ip = pkt["src_ip"]
+        dst_ip = pkt["dst_ip"]
+        
+        # Resolution priority: 1) node_map (classifier) 2) resolver (config) 3) dynamic_map (heuristics) 4) raw IP
+        src_name = node_map.get(src_ip) or resolver.resolve(src_ip)
+        if src_name == src_ip or src_name == "Unknown":
+            src_name = dynamic_map.get(src_ip, src_ip)
+        
+        dst_name = node_map.get(dst_ip) or resolver.resolve(dst_ip)
+        if dst_name == dst_ip or dst_name == "Unknown":
+            dst_name = dynamic_map.get(dst_ip, dst_ip)
+        
+        # DEBUG LOGGING (First 5 packets)
+        if len(messages) < 5:
+             logger.info(f"Resolving {src_ip} -> {src_name}")
+             logger.info(f"Resolving {dst_ip} -> {dst_name}")
+
+
         msg = {
             "timestamp": pkt.get("timestamp", 0),
             "src_ip": pkt["src_ip"],
@@ -551,6 +644,8 @@ def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 
             "transport": pkt.get("transport", "Unknown"),
             "length": pkt.get("length", 0),
             "info": pkt.get("protocol_info", ""),
+            "src_name": src_name,
+            "dst_name": dst_name,
         }
         
         # Add protocol-specific details
