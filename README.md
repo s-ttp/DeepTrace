@@ -1,6 +1,6 @@
-# NetTrace AI - Intelligent Mobile Network Analysis
+# DeepTrace - Intelligent Mobile Network Analysis
 
-NetTrace AI is a comprehensive tool for analyzing mobile network traffic (2G, 3G, 4G LTE, 5G SA) from PCAP files. It combines deep packet inspection (DPI) with AI-driven Root Cause Analysis (RCA) to diagnose network failures, voice quality issues, and performance bottlenecks.
+DeepTrace is a comprehensive tool for analyzing mobile network traffic (2G, 3G, 4G LTE, 5G SA) from PCAP files. It combines deep packet inspection (DPI) with AI-driven Root Cause Analysis (RCA) to diagnose network failures, voice quality issues, and performance bottlenecks.
 
 ## 🏗️ High-Level Architecture
 
@@ -59,8 +59,8 @@ The application follows a modern, decoupled architecture:
 
 1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/s-ttp/NetTrace.git
-    cd NetTrace
+    git clone https://github.com/s-ttp/DeepTrace.git
+    cd DeepTrace
     ```
 
 2.  **Backend Setup**

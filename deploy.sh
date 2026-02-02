@@ -1,10 +1,10 @@
 #!/bin/bash
-# NetTrace AI Deployment Script
+# DeepTrace Deployment Script
 # Builds frontend and restarts backend service
 
 set -e
 
-echo "=== NetTrace AI Deployment ==="
+echo "=== DeepTrace Deployment ==="
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,13 +24,13 @@ fi
 
 # Create systemd service if it doesn't exist
 echo "[3/4] Checking systemd service..."
-SERVICE_FILE="/etc/systemd/system/nettrace-backend.service"
+SERVICE_FILE="/etc/systemd/system/deeptrace-backend.service"
 
 if [ ! -f "$SERVICE_FILE" ]; then
     echo "Creating systemd service file (requires sudo)..."
     sudo tee "$SERVICE_FILE" > /dev/null << EOF
 [Unit]
-Description=NetTrace AI Backend
+Description=DeepTrace Backend
 After=network.target
 
 [Service]
@@ -46,7 +46,7 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=multi-user.target
 EOF
     sudo systemctl daemon-reload
-    sudo systemctl enable nettrace-backend
+    sudo systemctl enable deeptrace-backend
     echo "Systemd service created and enabled."
 else
     echo "Systemd service already exists."
@@ -54,20 +54,20 @@ fi
 
 # Restart service
 echo "[4/4] Restarting backend service..."
-sudo systemctl restart nettrace-backend
+sudo systemctl restart deeptrace-backend
 
 # Check status
 sleep 2
-if sudo systemctl is-active --quiet nettrace-backend; then
+if sudo systemctl is-active --quiet deeptrace-backend; then
     echo ""
     echo "=== Deployment Complete ==="
     echo "Backend running on http://0.0.0.0:8000"
-    echo "Service status: $(sudo systemctl is-active nettrace-backend)"
+    echo "Service status: $(sudo systemctl is-active deeptrace-backend)"
     echo ""
     echo "Useful commands:"
-    echo "  View logs:    sudo journalctl -u nettrace-backend -f"
-    echo "  Stop:         sudo systemctl stop nettrace-backend"
-    echo "  Restart:      sudo systemctl restart nettrace-backend"
+    echo "  View logs:    sudo journalctl -u deeptrace-backend -f"
+    echo "  Stop:         sudo systemctl stop deeptrace-backend"
+    echo "  Restart:      sudo systemctl restart deeptrace-backend"
 else
     echo "ERROR: Backend failed to start!"
     sudo journalctl -u nettrace-backend -n 20
