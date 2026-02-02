@@ -63,7 +63,18 @@ The application follows a modern, decoupled architecture:
     cd DeepTrace
     ```
 
-2.  **Backend Setup**
+### Quick Start (Linux/Production)
+
+You can use the included deployment script to build the frontend, set up the backend environment, and install the systemd service automatically:
+
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
+
+### Manual Installation
+
+1.  **Backend Setup**
     ```bash
     cd backend
     python -m venv venv

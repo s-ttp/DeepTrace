@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 Type=simple
-User=sttp
-Group=sttp
-WorkingDirectory=/home/sttp/pcap/backend
-Environment="PATH=/home/sttp/pcap/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart=/home/sttp/pcap/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 80
+User=YOUR_USER
+Group=YOUR_GROUP
+WorkingDirectory=/path/to/deeptrace/backend
+Environment="PATH=/path/to/deeptrace/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/path/to/deeptrace/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 80
 Restart=always
 RestartSec=5
 # Allow binding to port 80 without root
