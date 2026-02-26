@@ -611,7 +611,10 @@ Score each root cause with a confidence percentage:
 Provide a STRUCTURED analysis with the following JSON format (respond ONLY with valid JSON):
 
 {{
-  "network_overview": "A 2-3 sentence executive summary based ONLY on observed protocols and messages",
+  "executive_narrative": "A conclusive, decisive 3-4 sentence paragraph explaining the exact sequence of events that led to the fault. Synthesize the correlation timeline and deterministic radio findings into a clear story.",
+  "contributing_factors": [
+    "List 2-4 key technical factors contributing to the event (e.g., 'Degrading RF conditions...', 'Frequent SgNB Modifications...')"
+  ],
   "classification": "ESTABLISHED|CANCELLED_BY_CALLER|REJECTED|INCOMPLETE|INCONCLUSIVE",
   "health_score": <number 0-100>,
   "health_status": "healthy|warning|critical",
@@ -662,7 +665,7 @@ Provide a STRUCTURED analysis with the following JSON format (respond ONLY with 
   ]
 }}
 
-CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are not explicitly present in the evidence above. If insufficient evidence exists, use classification "INCONCLUSIVE" and populate "inconclusive_aspects"."""
+CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are not explicitly present in the evidence above. If deterministic Groundhog Radio RCA findings (like RRC Latency or SgNB failure) or concrete PCAP error codes are provided, you MUST use them to write a confident, conclusive executive_narrative instead of treating the analysis as circumstantial or INCONCLUSIVE. If insufficient evidence exists altogether, use classification "INCONCLUSIVE" and populate "inconclusive_aspects"."""
 
     try:
         llm_client = get_llm_client()
@@ -750,7 +753,7 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
                 logger.info("JSON repair successful")
             
             # --- STRICT VALIDATION (Adapted for App Schema) ---
-            required_keys = {"classification", "root_causes", "network_overview"}
+            required_keys = {"classification", "root_causes", "executive_narrative"}
             missing = required_keys - rca_data.keys()
             if missing:
                 error_msg = f"RCA missing required keys: {missing}"
@@ -821,7 +824,8 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
             logger.warning(f"Failed to parse RCA JSON: {je}, using fallback format")
             # Return structured fallback with the raw text
             return {
-                "network_overview": response_text[:500] if len(response_text) > 500 else response_text,
+                "executive_narrative": response_text[:500] if len(response_text) > 500 else response_text,
+                "contributing_factors": ["LLM returned unparseable text. See raw overview."],
                 "health_score": 75,
                 "health_status": "warning",
                 "observations": [
@@ -843,7 +847,8 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
     except Exception as e:
         logger.error(f"Error performing RCA: {e}")
         return {
-            "network_overview": f"Analysis could not be completed: {str(e)}",
+            "executive_narrative": f"Analysis could not be completed: {str(e)}",
+            "contributing_factors": [],
             "health_score": 0,
             "health_status": "critical",
             "observations": [

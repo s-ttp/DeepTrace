@@ -312,8 +312,27 @@ function Dashboard({ data, jobId, caseId, apiUrl, onNewAnalysis, onIterationUplo
                             padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600'
                           }}>{rca.classification || 'N/A'}</span>
                         </div>
-                        <p style={{ color: '#e2e8f0', lineHeight: '1.7' }}>{rca.network_overview}</p>
+                        <h4 style={{ color: '#e2e8f0', fontSize: '1.1rem', marginBottom: '0.75rem', fontWeight: '600' }}>Root Cause Analysis</h4>
+                        <p style={{ color: '#cbd5e1', lineHeight: '1.7', fontSize: '1rem', whiteSpace: 'pre-wrap' }}>
+                          {rca.executive_narrative || rca.network_overview}
+                        </p>
                       </div>
+
+                      {/* Key Contributing Factors */}
+                      {rca.contributing_factors && rca.contributing_factors.length > 0 && (
+                        <div className="contributing-factors" style={{ marginBottom: '1.5rem', background: 'rgba(30, 41, 59, 0.5)', borderRadius: '12px', padding: '1.25rem' }}>
+                          <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#e2e8f0', fontSize: '1rem' }}>
+                            <span style={{ color: '#f59e0b' }}>⚠️</span> Key Contributing Factors
+                          </h4>
+                          <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                            {rca.contributing_factors.map((factor, idx) => (
+                              <li key={idx} style={{ marginBottom: '0.5rem' }}>
+                                {factor}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Pattern Matches */}
                       {rca.pattern_matches && rca.pattern_matches.length > 0 && (
