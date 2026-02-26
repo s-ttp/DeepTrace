@@ -75,8 +75,8 @@ async def enrich_with_llm(flows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     # Use configured model (Kimi K2 Turbo as default)
     model = os.getenv("KIMI_MODEL", "kimi-k2.5")
     
-    # Only analyze top flows to limit API calls (POC)
-    flows_to_analyze = flows[:10]
+    # Only analyze top 3 flows to speed up initial load (was 10)
+    flows_to_analyze = flows[:3]
     
     for i, flow in enumerate(flows_to_analyze):
         flow_copy = flow.copy()
@@ -121,7 +121,7 @@ Provide a brief analysis (2-3 sentences) covering:
                         {"role": "user", "content": prompt}
                     ],
                     temperature=1,
-                    max_completion_tokens=200
+                    max_completion_tokens=150
                 )
                 insight = completion.choices[0].message.content
                 flow_copy["llm_insight"] = insight
@@ -135,7 +135,7 @@ Provide a brief analysis (2-3 sentences) covering:
         enriched.append(flow_copy)
     
     # Add remaining flows without LLM insights
-    for flow in flows[10:]:
+    for flow in flows[3:]:
         flow_copy = flow.copy()
         flow_copy["llm_insight"] = "Not analyzed (limit reached for POC)"
         enriched.append(flow_copy)
@@ -312,6 +312,72 @@ def handle_tool_call(tool_name: str, tool_args: Dict[str, Any], context: Dict[st
         return f"Unknown tool: {tool_name}"
 
 
+def _format_groundhog_section(summary: dict = None) -> str:
+    """Format Groundhog summary for LLM prompt."""
+    if not summary:
+        return "## GROUNDHOG RADIO SUMMARY: Radio KPIs not available - no Groundhog trace uploaded."
+    lines = ["## GROUNDHOG RADIO SUMMARY"]
+    lines.append(f"- Total Events: {summary.get('total_events', 0)}")
+    tr = summary.get('time_range', {})
+    if tr.get('duration_seconds'):
+        lines.append(f"- Duration: {tr['duration_seconds']:.1f}s")
+    etc = summary.get('event_type_counts', {})
+    if etc:
+        lines.append(f"- Event Types: {json.dumps(etc)}")
+    gc = summary.get('generation_counts', {})
+    if gc:
+        lines.append(f"- Generations: {json.dumps(gc)}")
+    ids = summary.get('identifiers_found', {})
+    if ids.get('imsi_count'):
+        lines.append(f"- IMSIs: {ids['imsi_count']}")
+    if ids.get('cell_id_count'):
+        lines.append(f"- Cells: {ids['cell_id_count']}")
+    kpis = summary.get('kpi_statistics', {})
+    if kpis:
+        for k, v in kpis.items():
+            lines.append(f"- {k}: min={v.get('min')}, avg={v.get('avg')}, max={v.get('max')} {v.get('unit', '')}")
+    ri = summary.get('radio_issues_detected', {})
+    if ri:
+        lines.append(f"- **Radio Issues**: {json.dumps(ri)}")
+    return "\n".join(lines)
+
+
+def _format_correlation_section(report: dict = None) -> str:
+    """Format correlation report for LLM prompt."""
+    if not report:
+        return "## CORRELATION REPORT: No cross-plane correlation performed."
+    status = report.get('status', 'UNKNOWN')
+    if status in ('NO_DATA', 'PCAP_ONLY', 'GROUNDHOG_ONLY'):
+        return f"## CORRELATION REPORT: {report.get('message', status)}"
+    lines = ["## CORRELATION REPORT"]
+    lines.append(f"- Status: {status}")
+    lines.append(f"- Time Alignment: {report.get('time_alignment', '?')}")
+    lines.append(f"- Overlap: {report.get('overlap_seconds', 0)}s")
+    lines.append(f"- High-confidence matches: {report.get('high_confidence_matches', 0)}")
+    lines.append(f"- Medium-confidence matches: {report.get('medium_confidence_matches', 0)}")
+    ki = report.get('key_incidents', [])
+    if ki:
+        lines.append("### Key Correlated Incidents")
+        for inc in ki[:5]:
+            lines.append(f"- **{inc.get('type')}**: {inc.get('description')} (severity={inc.get('severity')}, confidence={inc.get('confidence')}%)")
+    return "\n".join(lines)
+
+
+def _format_radio_findings_section(findings: list = None) -> str:
+    """Format radio RCA findings for LLM prompt."""
+    if not findings:
+        return "## RADIO ROOT CAUSE FINDINGS (DETERMINISTIC): No radio detectors triggered."
+    lines = ["## RADIO ROOT CAUSE FINDINGS (DETERMINISTIC)"]
+    for f in findings:
+        lines.append(f"### {f.get('finding_type', 'UNKNOWN')} ({f.get('confidence_level', '?')} {f.get('confidence_pct', 0)}%)")
+        lines.append(f"  {f.get('description', '')}")
+        for ev in f.get('evidence', []):
+            lines.append(f"  - Evidence: {ev}")
+        for lim in f.get('limitations', []):
+            lines.append(f"  - Limitation: {lim}")
+    return "\n".join(lines)
+
+
 async def root_cause_analysis(
     flows: List[Dict[str, Any]], 
     summary: Dict[str, Any] = None,
@@ -331,7 +397,12 @@ async def root_cause_analysis(
     session_timer_context: str = None,
     transfer_context: str = None,
     handover_context: str = None,
-    vendor_context: str = None  # NEW: Vendor-specific code mappings
+    vendor_context: str = None,  # NEW: Vendor-specific code mappings
+    ran_context: str = None,  # NEW: Multi-generation RAN analysis context
+    # Groundhog / Correlation / Radio RCA context
+    groundhog_summary: dict = None,
+    correlation_report: dict = None,
+    radio_findings: list = None,
 ) -> Dict[str, Any]:
     """
     Enhanced AI Analysis: Returns structured RCA with sections for
@@ -384,7 +455,17 @@ async def root_cause_analysis(
              - **Silence**: If 'media_findings' show low packet rate.
              """
 
+    input_type_guidance = ""
+    if groundhog_summary and not summary.get("total_flows"):
+        input_type_guidance = """
+**CRITICAL CONTEXT**: ONLY A GROUNDHOG RADIO TRACE WAS UPLOADED. NO PCAP DATA WAS PROVIDED. 
+- DO NOT complain about "No network traffic captured" or "zero flows, zero packets". 
+- Evaluate the network health EXCLUSIVELY based on the Groundhog Radio KPIs and Collision/Findings below.
+- Ignore any missing PCAP data; focus your diagnosis entirely on the provided UE-side/Radio evidence.
+"""
+
     prompt = f"""You are a telecom root cause analysis engine.
+{input_type_guidance}
 
 ## STRICT RULES (MANDATORY):
 1. You may ONLY use protocols, messages, and fields that are explicitly present in the provided evidence.
@@ -460,6 +541,25 @@ async def root_cause_analysis(
 {handover_context if handover_context else "## SRVCC/CSFB DETECTION: No PS→CS handover or CS Fallback indicators detected."}
 
 {vendor_context if vendor_context else "## VENDOR CODE MAPPINGS: No vendor-specific code mappings available."}
+
+{ran_context if ran_context else "## RAN ANALYSIS: No RAN signaling (S1AP/NGAP/RANAP/BSSAP) observable from this capture point."}
+
+## OBSERVED DATASETS
+- PCAP: {"Present" if summary and summary.get('total_flows') else "Not uploaded"}
+- Groundhog Radio Trace: {"Present" if groundhog_summary else "Not uploaded"}
+
+{_format_groundhog_section(groundhog_summary)}
+
+{_format_correlation_section(correlation_report)}
+
+{_format_radio_findings_section(radio_findings)}
+
+## RADIO ANALYSIS GUARDRAILS (MANDATORY)
+- If Groundhog radio trace is NOT uploaded, state: "Radio KPIs not available - UE-side measurements not captured"
+- If RAN signaling is NOT in PCAP, state: "RAN signaling not captured at this observation point"
+- NEVER invent radio events not present in the evidence
+- Radio conclusions MUST be grounded in observed RAN evidence from Groundhog + RAN signaling
+- If a radio cause is NOT supported by Groundhog evidence OR RAN signaling evidence, mark it INCONCLUSIVE
 
 ## DEEP TRANSACTIONS (Sample)
 {json.dumps(top_transactions, indent=2, default=str) if top_transactions else "No detailed transactions available."}
@@ -550,7 +650,16 @@ Provide a STRUCTURED analysis with the following JSON format (respond ONLY with 
     "voice_quality": "description based ONLY on observed IMS/RTP (or 'Not observable')",
     "cross_plane_correlation": "correlation based ONLY on observed data"
   }},
-  "sequence_diagram": "mermaid sequence diagram code (string) visualizing observed message flow. Use 'sequenceDiagram' header. Include ONLY observed protocols."
+  "sequence_diagram": "mermaid sequence diagram code (string) visualizing observed message flow. Use 'sequenceDiagram' header. Include ONLY observed protocols.",
+  "radio_root_causes": [
+    {{
+      "finding_type": "RADIO_LINK_FAILURE_IMPACTING_CALL|HANDOVER_FAILURE_OR_SRVCC|PAGING_FAILURE_OR_UE_UNREACHABLE|COVERAGE_DEGRADATION|RADIO_DATA_PATH_DEGRADATION|NOT_OBSERVABLE",
+      "description": "Description grounded in observed radio evidence",
+      "confidence_pct": "<number 0-100>",
+      "evidence": ["source: Groundhog|PCAP", "specific measurement/event"],
+      "limitation": "What cannot be concluded"
+    }}
+  ]
 }}
 
 CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are not explicitly present in the evidence above. If insufficient evidence exists, use classification "INCONCLUSIVE" and populate "inconclusive_aspects"."""
@@ -573,7 +682,7 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
             "messages": [
                 {
                     "role": "system", 
-                    "content": "You are an expert telecom network analyst AI specializing in 3GPP mobile networks. You MUST respond with valid JSON only. Your expertise covers: Mobile network protocols (GTP-U/C, PFCP, Diameter, S1-AP, NGAP), Voice protocols (SIP, RTP, VoLTE/VoNR), Legacy (SS7, M3UA), and Supporting protocols (DNS, RADIUS, DHCP, HTTP/2 for 5G-SBI). IMPORTANT: Provide DETAILED, COMPREHENSIVE analysis with extensive explanations. For each root cause, include: 1) Full technical description with protocol-level details, 2) Multiple specific evidence references with frame numbers and timestamps, 3) Detailed confidence justification citing exact message fields, 4) Impact assessment. Reference 3GPP specifications (TS 24.301, TS 29.274, TS 29.244, TS 38.413, TS 29.229) and RFCs where applicable. Generate thorough inconclusive_aspects explaining what cannot be determined and why."
+                    "content": "You are an expert telecom network analyst AI specializing in 3GPP mobile networks. You MUST respond with valid JSON only. Your expertise covers: Mobile network protocols (GTP-U/C, PFCP, Diameter, S1-AP, NGAP), Voice protocols (SIP, RTP, VoLTE/VoNR), Legacy (SS7, M3UA), and Supporting protocols (DNS, RADIUS, DHCP, HTTP/2 for 5G-SBI). IMPORTANT: Provide CONCISE but insightful analysis. Avoid excessive verbosity to prevent response truncation. For each root cause, include: 1) Technical description with protocol-level details, 2) Specific evidence references, 3) Confidence justification, 4) Impact assessment. Reference 3GPP specifications where applicable."
                 },
                 {"role": "user", "content": prompt}
             ],
@@ -600,6 +709,23 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
         
         response_text = raw_content.strip() if raw_content else ""
         
+        # Repair JSON if needed (simple quote/brace closer)
+        def repair_json(text):
+            text = text.strip()
+            # If it doesn't end with }, it's likely truncated
+            if not text.endswith('}'):
+                # Count open/close braces to estimate missing closures
+                open_braces = text.count('{')
+                close_braces = text.count('}')
+                missing = open_braces - close_braces
+                if missing > 0:
+                    # Check if we are inside a string (odd number of quotes?)
+                    # This is naive but often sufficient for LLM truncation
+                    if text.count('"') % 2 != 0:
+                        text += '"'
+                    text += '}' * missing
+            return text
+
         # Try to parse JSON response
         try:
             # Clean up response if it has markdown code blocks
@@ -610,7 +736,18 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
             if response_text.endswith("```"):
                 response_text = response_text[:-3]
             
-            rca_data = json.loads(response_text.strip())
+            if response_text.endswith("```"):
+                response_text = response_text[:-3]
+            
+            # Initial parse attempt
+            try:
+                rca_data = json.loads(response_text.strip())
+            except json.JSONDecodeError:
+                # Attempt repair
+                logger.info("JSON parse failed, attempting repair of truncated JSON...")
+                repaired_text = repair_json(response_text)
+                rca_data = json.loads(repaired_text)
+                logger.info("JSON repair successful")
             
             # --- STRICT VALIDATION (Adapted for App Schema) ---
             required_keys = {"classification", "root_causes", "network_overview"}
@@ -622,6 +759,21 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
             # Sanitize Mermaid code to prevent syntax errors
             if "sequence_diagram" in rca_data and isinstance(rca_data["sequence_diagram"], str):
                 diagram = rca_data["sequence_diagram"]
+                
+                # Strip markdown code fences if present
+                if diagram.strip().startswith("```"):
+                    lines = diagram.strip().split("\n")
+                    # Remove first and last lines if they are code fences
+                    if lines[0].strip().startswith("```"):
+                        lines = lines[1:]
+                    if lines and lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    diagram = "\n".join(lines)
+                
+                # Ensure diagram starts with sequenceDiagram
+                if not diagram.strip().startswith("sequenceDiagram"):
+                    diagram = "sequenceDiagram\n" + diagram
+                
                 # Fix common Mermaid syntax issues:
                 # 1. Semicolons break message parsing
                 diagram = diagram.replace(";", ",")
@@ -629,11 +781,37 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
                 diagram = diagram.replace("<-->", "->>")
                 diagram = diagram.replace("<->", "->>")
                 # 3. Percent signs break Mermaid (comment marker)
-                diagram = diagram.replace("%", " percent")
+                diagram = diagram.replace("%", " pct")
                 # 4. Curly braces can break parsing
                 diagram = diagram.replace("{", "(").replace("}", ")")
                 # 5. Hash/pound signs can cause issues
                 diagram = diagram.replace("#", "")
+                # 6. Colons in message text need escaping (keep only one colon for message separator)
+                import re
+                # Replace multiple colons with single
+                diagram = re.sub(r':{2,}', ':', diagram)
+                # 7. Remove HTML tags
+                diagram = re.sub(r'<[^>]+>', '', diagram)
+                # 8. Fix quotes - use single quotes consistently
+                diagram = diagram.replace('"', "'")
+                # 9. Remove empty lines that might cause issues
+                lines = [l for l in diagram.split("\n") if l.strip()]
+                
+                # Check for truncated last line
+                if lines:
+                    last_line = lines[-1].strip()
+                    # Common truncation indicators in Mermaid sequence diagrams
+                    if (last_line.endswith(":") or 
+                        last_line.endswith("->") or 
+                        last_line.endswith(">>") or 
+                        last_line.endswith("-") or
+                        (last_line.startswith("participant ") and len(last_line.split()) < 4)):
+                         
+                        logger.warning(f"Removing truncated Mermaid line: {last_line}")
+                        lines = lines[:-1]
+
+                diagram = "\n".join(lines)
+                
                 rca_data["sequence_diagram"] = diagram
                  
             logger.info("Enhanced structured RCA completed")

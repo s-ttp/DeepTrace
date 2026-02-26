@@ -14,8 +14,11 @@ __pycache__/
 .env.local
 
 # Temp & Data
-temp/
 backend/uploads/
+backend/artifacts/
+backend/debug_*.py
+frontend/build_log.txt
+frontend/nohup.out
 *.pcap
 *.pcapng
 *.log

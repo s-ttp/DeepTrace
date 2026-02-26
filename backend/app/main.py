@@ -16,11 +16,17 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import shutil
 import json
+import time
 
 from .pcap_parser import parse_pcap
 from .telecom_analyzer import analyze_flows, get_protocol_stats, get_technology_stats, identify_telecom_sessions, correlate_sessions, extract_message_sequence, get_failure_summary, format_session_for_export
 from .llm_service import enrich_with_llm, root_cause_analysis
+from .chat.router import router as chat_router
 from decode.tshark import tshark_available, get_tshark_stats
+from . import case_manager
+from .groundhog import ingest_groundhog
+from .correlation.correlate import run_correlation
+from .radio_rca import detect_radio_root_causes
 
 # Load environment variables
 load_dotenv()
@@ -148,6 +154,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include chat router
+app.include_router(chat_router, prefix="/api/chat")
 
 
 async def broadcast_progress(job_id: str, progress: int, message: str, stage: str = "processing"):
@@ -436,6 +445,35 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
                 transfer_context = ""
                 handover_context = ""
             
+            # --- RAN Analysis Integration (Multi-Generation) ---
+            expert_findings = []
+            ran_context = ""
+            ran_findings = []
+            ran_coverage_flags = {}
+            try:
+                from .ran import analyze_ran
+                from .ran.artifacts import format_findings_for_llm
+                
+                ran_results = await asyncio.to_thread(analyze_ran, file_path)
+                ran_findings = ran_results.get("ran_findings", [])
+                ran_coverage_flags = ran_results.get("coverage_flags", {})
+                
+                # Format for LLM context
+                ran_context = format_findings_for_llm(ran_findings, ran_coverage_flags)
+                
+                # Add RAN findings to expert findings for unified display
+                for rf in ran_findings:
+                    expert_findings.append({
+                        "severity": rf.get("severity", "info").title(),
+                        "group": "RAN Analysis",
+                        "protocol": rf.get("generation", "Unknown"),
+                        "summary": f"{rf.get('type')}: {rf.get('description')}"
+                    })
+                
+                logger.info(f"RAN Analysis: {len(ran_findings)} findings, Coverage: {ran_coverage_flags}")
+            except Exception as e:
+                logger.warning(f"RAN Analysis failed: {e}")
+            
         # Re-extract message sequence with classified node names
         if node_map:
             logger.info("Re-extracting message sequence with classified nodes")
@@ -467,8 +505,9 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
         # with open(artifact_path / "transactions.json", "w") as f:
         #     json.dump(transactions_artifact, f, indent=2, default=str)
         
-        # Expert Findings - keep in memory for results
-        expert_findings = tshark_stats.get("expert_info", [])
+        # Expert Findings - extend with TShark info (don't overwrite existing RAN findings)
+        tshark_expert_info = tshark_stats.get("expert_info", [])
+        expert_findings.extend(tshark_expert_info)
         if media_findings:
             for mf in media_findings:
                 expert_findings.append({
@@ -519,7 +558,7 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
         # Prepare Voice Context for LLM
         voice_context = {
             "calls": voice_calls[:10], # Top 10 calls
-            "media_findings": all_voip_findings if 'all_voip_findings' in dir() else media_findings,
+            "media_findings": all_voip_findings if all_voip_findings else media_findings,
             "stats": analytics_artifact["voice_stats"]
         }
         
@@ -568,14 +607,16 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
             temporal_context=temporal_llm_context,
             subscriber_context=subscriber_llm_context,
             # New VoLTE enhancement contexts
-            codec_context=codec_llm_context if 'codec_llm_context' in dir() else None,
-            ringback_context=ringback_llm_context if 'ringback_llm_context' in dir() else None,
-            precondition_context=precondition_llm_context if 'precondition_llm_context' in dir() else None,
-            rtp_quality_context=rtp_quality_llm_context if 'rtp_quality_llm_context' in dir() else None,
-            session_timer_context=session_timer_context if 'session_timer_context' in dir() else None,
-            transfer_context=transfer_context if 'transfer_context' in dir() else None,
-            handover_context=handover_context if 'handover_context' in dir() else None,
-            vendor_context=vendor_context if vendor_context else None
+            codec_context=locals().get('codec_llm_context'),
+            ringback_context=locals().get('ringback_llm_context'),
+            precondition_context=locals().get('precondition_llm_context'),
+            rtp_quality_context=locals().get('rtp_quality_llm_context'),
+            session_timer_context=locals().get('session_timer_context'),
+            transfer_context=locals().get('transfer_context'),
+            handover_context=locals().get('handover_context'),
+            vendor_context=vendor_context if vendor_context else None,
+            # RAN Analysis context (Multi-Generation)
+            ran_context=ran_context if ran_context else None
         )
 
         # Findings.json - disabled (RCA kept in memory)
@@ -801,6 +842,353 @@ async def delete_analysis(job_id: str):
     logger.info(f"Deleted analysis job {job_id}")
     
     return {"status": "deleted", "job_id": job_id}
+
+
+# ============================================================================
+# Case-based API endpoints (iterative Groundhog + PCAP workflow)
+# ============================================================================
+
+@app.post("/api/cases")
+async def create_case():
+    """Create a new analysis case. Returns case_id."""
+    meta = case_manager.create_case()
+    return {"case_id": meta["case_id"], "status": "created"}
+
+
+@app.get("/api/cases/{case_id}")
+async def get_case(case_id: str):
+    """Get case metadata and status."""
+    meta = case_manager.get_case(case_id)
+    if meta is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    # Add analysis results if available
+    if case_id in analyses:
+        meta["analysis"] = {
+            "status": analyses[case_id].get("status"),
+            "progress": analyses[case_id].get("progress"),
+        }
+    
+    return meta
+
+
+@app.post("/api/cases/{case_id}/upload")
+async def upload_case_file(
+    case_id: str,
+    file: UploadFile = File(...),
+    file_kind: str = "pcap",
+    timezone: str = None,
+):
+    """
+    Upload a file (PCAP or Groundhog trace) to a case.
+    
+    Args:
+        file_kind: "pcap" or "groundhog"
+        timezone: Optional timezone override (default: Asia/Qatar)
+    """
+    meta = case_manager.get_case(case_id)
+    if meta is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    if file_kind not in ("pcap", "groundhog"):
+        raise HTTPException(status_code=400, detail="file_kind must be 'pcap' or 'groundhog'")
+    
+    # Validate file
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No filename provided")
+    
+    if file_kind == "pcap":
+        if not (file.filename.lower().endswith('.pcap') or file.filename.lower().endswith('.pcapng')):
+            raise HTTPException(status_code=400, detail="PCAP files must be .pcap or .pcapng")
+    else:
+        valid_exts = ['.html', '.htm', '.csv', '.xls', '.xlsx', '.json', '.xml']
+        if not any(file.filename.lower().endswith(ext) for ext in valid_exts):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Supported Groundhog formats: {', '.join(valid_exts)}"
+            )
+    
+    # Read content
+    content = await file.read()
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="Empty file")
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"File too large (max {MAX_FILE_SIZE // (1024*1024)} MB)")
+    
+    # Save file to case directory
+    case_dir = case_manager.get_case_dir(case_id)
+    subdir = case_dir / file_kind
+    subdir.mkdir(parents=True, exist_ok=True)
+    
+    safe_name = file.filename.replace(' ', '_')
+    file_path = subdir / safe_name
+    file_path.write_bytes(content)
+    
+    # Register in metadata
+    ext = os.path.splitext(file.filename)[1].lower()
+    if file_kind == "pcap":
+        case_manager.register_pcap(case_id, file.filename, str(file_path))
+    else:
+        case_manager.register_groundhog(case_id, file.filename, str(file_path), ext.lstrip('.'))
+    
+    logger.info(f"Case {case_id}: Uploaded {file_kind} file '{file.filename}' ({len(content)} bytes)")
+    
+    return {
+        "case_id": case_id,
+        "file_kind": file_kind,
+        "filename": file.filename,
+        "size": len(content),
+        "timezone": timezone or "Asia/Qatar",
+    }
+
+
+@app.post("/api/cases/{case_id}/analyze")
+async def analyze_case(
+    case_id: str,
+    run_pcap_analysis: bool = True,
+    run_groundhog_analysis: bool = True,
+    run_correlation: bool = True,
+    run_final_rca: bool = True,
+    timezone: str = None,
+):
+    """
+    Trigger analysis for a case. Supports iterative analysis.
+    """
+    meta = case_manager.get_case(case_id)
+    if meta is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    
+    # Check if anything is uploaded
+    if not meta.get("pcap") and not meta.get("groundhog"):
+        raise HTTPException(status_code=400, detail="No files uploaded to this case")
+    
+    # Initialize analysis tracking
+    analyses[case_id] = {
+        "job_id": case_id,
+        "case_id": case_id,
+        "status": "processing",
+        "progress": 0,
+        "stage": "starting",
+        "filename": (meta.get("pcap") or {}).get("filename") or (meta.get("groundhog") or {}).get("filename", "unknown"),
+        "results": None,
+        "error": None,
+    }
+    
+    # Start async analysis task
+    asyncio.create_task(
+        analyze_case_task(case_id, run_pcap_analysis, run_groundhog_analysis,
+                          run_correlation, run_final_rca, timezone)
+    )
+    
+    return {"case_id": case_id, "status": "processing"}
+
+
+async def analyze_case_task(
+    case_id: str,
+    run_pcap: bool,
+    run_groundhog: bool,
+    run_corr: bool,
+    run_rca: bool,
+    timezone: str = None,
+):
+    """Async task for case-based analysis."""
+    try:
+        meta = case_manager.get_case(case_id)
+        case_dir = case_manager.get_case_dir(case_id)
+        
+        pcap_results = None
+        groundhog_results = None
+        correlation_results = None
+        radio_findings = []
+        
+        total_steps = sum([run_pcap and meta.get("pcap") is not None,
+                           run_groundhog and meta.get("groundhog") is not None,
+                           run_corr, run_rca])
+        step = 0
+        
+        # --- Step 1: PCAP Analysis ---
+        if run_pcap and meta.get("pcap"):
+            step += 1
+            progress = int((step / max(total_steps, 1)) * 80)
+            analyses[case_id]["progress"] = progress
+            analyses[case_id]["stage"] = "pcap_analysis"
+            await broadcast_progress(case_id, progress, "Extracting packets from PCAP file...", "pcap_analysis")
+            
+            pcap_path = meta["pcap"]["file_path"]
+            
+            # Run existing PCAP pipeline
+            packets = await asyncio.to_thread(parse_pcap, pcap_path)
+            if packets:
+                flows = await asyncio.to_thread(analyze_flows, packets)
+                protocol_stats = await asyncio.to_thread(get_protocol_stats, flows)
+                technology_stats = await asyncio.to_thread(get_technology_stats, flows)
+                sessions = await asyncio.to_thread(identify_telecom_sessions, flows)
+                failure_summary = await asyncio.to_thread(get_failure_summary, flows)
+                
+                summary = {
+                    "total_flows": len(flows),
+                    "total_packets": len(packets),
+                    "protocols": list(protocol_stats.keys()),
+                    "capture_point": infer_capture_point(list(protocol_stats.keys())),
+                }
+                
+                # Save PCAP artifacts
+                pcap_art_dir = case_dir / "pcap"
+                pcap_art_dir.mkdir(parents=True, exist_ok=True)
+                with open(pcap_art_dir / "summary.json", "w") as f:
+                    json.dump(summary, f, indent=2, default=str)
+                with open(pcap_art_dir / "flows.json", "w") as f:
+                    json.dump(flows[:200], f, indent=2, default=str)  # Limit for disk
+                
+                pcap_results = {
+                    "flows": flows,
+                    "summary": summary,
+                    "protocol_stats": protocol_stats,
+                    "technology_stats": technology_stats,
+                    "sessions": sessions,
+                    "failure_summary": failure_summary,
+                    "packets": packets,
+                }
+                
+                case_manager.update_case_meta(case_id, {
+                    "pcap": {**meta["pcap"], "analyzed": True}
+                })
+        
+        # --- Step 2: Groundhog Analysis ---
+        if run_groundhog and meta.get("groundhog"):
+            step += 1
+            progress = int((step / max(total_steps, 1)) * 60)
+            analyses[case_id]["progress"] = progress
+            analyses[case_id]["stage"] = "groundhog_analysis"
+            await broadcast_progress(case_id, progress, "Parsing raw Radio Trace formatting...", "groundhog_analysis")
+            
+            gh_path = meta["groundhog"]["file_path"]
+            gh_output = str(case_dir / "groundhog")
+            
+            await broadcast_progress(case_id, progress + 5, "Normalizing sequence diagrams...", "groundhog_analysis")
+            
+            try:
+                groundhog_results = await asyncio.to_thread(
+                    ingest_groundhog, gh_path, gh_output, timezone
+                )
+                case_manager.update_case_meta(case_id, {
+                    "groundhog": {**meta["groundhog"], "analyzed": True}
+                })
+                logger.info(f"Groundhog: {len(groundhog_results.get('events', []))} events normalized")
+            except ValueError as e:
+                logger.error(f"Groundhog ingestion failed: {e}")
+                groundhog_results = {"events": [], "summary": {}, "error": str(e)}
+        
+        # --- Step 3: Correlation ---
+        if run_corr:
+            step += 1
+            progress = int((step / max(total_steps, 1)) * 80)
+            analyses[case_id]["progress"] = progress
+            analyses[case_id]["stage"] = "correlation"
+            await broadcast_progress(case_id, progress, "Running cross-plane correlation...", "correlation")
+            
+            pcap_events = []
+            if pcap_results:
+                pcap_events = pcap_results.get("flows", [])
+            
+            gh_events = []
+            if groundhog_results:
+                gh_events = groundhog_results.get("events", [])
+            
+            correlation_results = await asyncio.to_thread(
+                run_correlation, str(case_dir), pcap_events, gh_events
+            )
+            
+            # Run radio detectors
+            gh_summary = groundhog_results.get("summary") if groundhog_results else None
+            pcap_findings = []
+            if pcap_results:
+                pcap_findings = pcap_results.get("failure_summary", {}).get("failures", [])
+            
+            corr_report = correlation_results.get("correlation_report", {})
+            
+            radio_findings = await asyncio.to_thread(
+                detect_radio_root_causes,
+                gh_events, pcap_findings, corr_report, gh_summary,
+                str(case_dir / "final")
+            )
+        
+        # --- Step 4: Final RCA ---
+        rca = None
+        if run_rca:
+            step += 1
+            analyses[case_id]["progress"] = 90
+            analyses[case_id]["stage"] = "rca"
+            await broadcast_progress(case_id, 90, "Correlating timeline events with AI Models...", "rca")
+            
+            # Build context for LLM
+            flows = pcap_results.get("flows", []) if pcap_results else []
+            summary = pcap_results.get("summary", {}) if pcap_results else {}
+            
+            gh_summary_data = groundhog_results.get("summary", {}) if groundhog_results else None
+            corr_report_data = correlation_results.get("correlation_report", {}) if correlation_results else None
+            
+            rca = await root_cause_analysis(
+                flows=flows,
+                summary=summary,
+                failure_summary=pcap_results.get("failure_summary") if pcap_results else None,
+                groundhog_summary=gh_summary_data,
+                correlation_report=corr_report_data,
+                radio_findings=radio_findings if radio_findings else None,
+            )
+            
+            # Save RCA
+            final_dir = case_dir / "final"
+            final_dir.mkdir(parents=True, exist_ok=True)
+            with open(final_dir / "rca.json", "w") as f:
+                json.dump(rca, f, indent=2, default=str)
+        
+        # --- Build combined results ---
+        results = {
+            "summary": pcap_results.get("summary", {}) if pcap_results else {},
+            "flows": (pcap_results.get("flows", []) if pcap_results else []),
+            "protocol_stats": pcap_results.get("protocol_stats", {}) if pcap_results else {},
+            "technology_stats": pcap_results.get("technology_stats", {}) if pcap_results else {},
+            "root_cause_analysis": rca,
+            "groundhog_summary": groundhog_results.get("summary") if groundhog_results else None,
+            "groundhog_events_count": len(groundhog_results.get("events", [])) if groundhog_results else 0,
+            "correlation_report": correlation_results.get("correlation_report") if correlation_results else None,
+            "cross_plane_events": (correlation_results.get("cross_plane_events", [])[:100]
+                                   if correlation_results else []),
+            "radio_findings": radio_findings,
+            "case_id": case_id,
+            "datasets": {
+                "pcap_present": meta.get("pcap") is not None,
+                "pcap_filename": meta.get("pcap", {}).get("filename") if meta.get("pcap") else None,
+                "groundhog_present": meta.get("groundhog") is not None,
+                "groundhog_filename": meta.get("groundhog", {}).get("filename") if meta.get("groundhog") else None,
+                "groundhog_format": meta.get("groundhog", {}).get("format") if meta.get("groundhog") else None,
+            },
+        }
+        
+        analyses[case_id]["status"] = "completed"
+        analyses[case_id]["progress"] = 100
+        analyses[case_id]["results"] = results
+        analyses[case_id]["stage"] = "completed"
+        
+        await broadcast_progress(case_id, 100, "Analysis complete!", "completed")
+        
+        case_manager.record_analysis_run(case_id, {
+            "status": "completed",
+            "pcap_analyzed": run_pcap and meta.get("pcap") is not None,
+            "groundhog_analyzed": run_groundhog and meta.get("groundhog") is not None,
+            "correlation_run": run_corr,
+            "rca_run": run_rca,
+        })
+        
+        logger.info(f"Case {case_id} analysis completed")
+        
+    except Exception as e:
+        logger.error(f"Case {case_id} analysis failed: {e}", exc_info=True)
+        analyses[case_id]["status"] = "failed"
+        analyses[case_id]["error"] = str(e)
+        analyses[case_id]["stage"] = "failed"
+        await broadcast_progress(case_id, 0, f"Error: {str(e)}", "failed")
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):

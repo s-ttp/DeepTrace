@@ -21,6 +21,12 @@ The application follows a modern, decoupled architecture:
 *   **Flow tracking**: Aggregates packets into 5-tuple flows with bandwidth and PPS calculation.
 *   **Session Correlation**: Automatically links Control Plane sessions (Signaling) with User Plane flows (Data) using TEID/IP correlation.
 
+### 📻 Radio Trace Integration (Groundhog/CovMo)
+*   **Multi-Format Ingestion**: Parses HTML, CSV, XLS, XLSX, JSON, and XML Groundhog traces.
+*   **Radio KPI Extraction**: Extracts critical RF metrics including RSRP, RSRQ, SINR, CQI, and BLER.
+*   **Cross-Plane Correlation**: Aligns UE-side radio events (handovers, RLF) with core network signaling (S1AP/NGAP) using precise timing and cell identity synchronization.
+*   **Deterministic Radio Root Causes**: Flags issues like RRC Reconfiguration Latency, Abnormal Radio Releases, E-RAB Setup Failures, and SgNB Addition Failures based on strict protocol evidence.
+
 ### Voice & IMS Analysis
 *   **Call Reconstruction**: Builds full SIP call lifecycles (Invite -> Bye) including forking and re-invites.
 *   **Media Quality (RTP)**:

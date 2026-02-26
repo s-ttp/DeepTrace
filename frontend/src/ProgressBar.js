@@ -1,19 +1,21 @@
 import React from 'react';
 
-function ProgressBar({ progress, stage, message }) {
+function ProgressBar({ progress, stage, message, fileKind }) {
+  // Use dynamic stages depending on what's active, or just a comprehensive list
   const stages = [
-    { id: 'uploading', label: 'Uploading', icon: '☁️', description: 'Sending file' },
-    { id: 'parsing', label: 'Parsing', icon: '📄', description: 'Reading packets' },
-    { id: 'analyzing', label: 'Analyzing', icon: '🔍', description: 'Detecting protocols' },
-    { id: 'enriching', label: 'AI Insights', icon: '🤖', description: 'Deep analysis' },
-    { id: 'completed', label: 'Complete', icon: '✅', description: 'Ready!' },
+    { id: 'uploading', label: 'Uploading', icon: '☁️' },
+    { id: 'pcap_analysis', label: 'PCAP Engine', icon: '📄' },
+    { id: 'groundhog_analysis', label: 'Radio Parser', icon: '📻' },
+    { id: 'correlation', label: 'Correlation', icon: '🔗' },
+    { id: 'rca', label: 'AI Insights', icon: '🤖' },
   ];
 
   const getStageStatus = (stageId) => {
-    const stageOrder = ['uploading', 'parsing', 'analyzing', 'enriching', 'completed'];
+    const stageOrder = ['uploading', 'pcap_analysis', 'groundhog_analysis', 'correlation', 'rca', 'completed'];
     const currentIndex = stageOrder.indexOf(stage);
     const stageIndex = stageOrder.indexOf(stageId);
 
+    if (currentIndex === -1) return 'pending'; // Unknown stage currently active
     if (stageIndex < currentIndex) return 'completed';
     if (stageIndex === currentIndex) return 'active';
     return 'pending';

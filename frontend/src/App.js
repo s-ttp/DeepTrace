@@ -9,6 +9,8 @@ const API_URL = '';
 
 function App() {
   const [jobId, setJobId] = useState(null);
+  const [caseId, setCaseId] = useState(null);
+  const [fileKind, setFileKind] = useState(null); // 'pcap' or 'groundhog'
   const [analysisData, setAnalysisData] = useState(null);
   const [progress, setProgress] = useState(0);
   const [stage, setStage] = useState('');
@@ -34,7 +36,8 @@ function App() {
     checkApi();
   }, []);
 
-  const handleUploadComplete = (id) => {
+  // === Legacy PCAP-only upload flow (backward compat) ===
+  const handleLegacyUploadComplete = (id) => {
     setJobId(id);
     setError(null);
     setProgress(5);
@@ -43,51 +46,78 @@ function App() {
     connectWebSocket(id);
   };
 
+  // === New Case-based flow ===
+  const handleStartWithFileKind = async (kind) => {
+    setFileKind(kind);
+    try {
+      const resp = await fetch(`${API_URL}/api/cases`, { method: 'POST' });
+      const data = await resp.json();
+      setCaseId(data.case_id);
+    } catch (e) {
+      setError('Failed to create case: ' + e.message);
+    }
+  };
+
+  const handleCaseUploadComplete = async (respData) => {
+    const id = caseId;
+    setJobId(id);
+    setError(null);
+    setProgress(5);
+    setStage('starting');
+    setMessage('Starting analysis...');
+
+    // Trigger analysis
+    try {
+      await fetch(`${API_URL}/api/cases/${id}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          run_pcap_analysis: true,
+          run_groundhog_analysis: true,
+          run_correlation: true,
+          run_final_rca: true,
+        }),
+      });
+      connectWebSocket(id);
+    } catch (e) {
+      setError('Failed to start analysis: ' + e.message);
+    }
+  };
+
+  // === Iteration: add more data to existing case ===
+  const handleIterationUpload = async (respData) => {
+    setProgress(5);
+    setStage('starting');
+    setMessage('Re-running analysis with new data...');
+    setAnalysisData(null);
+
+    try {
+      await fetch(`${API_URL}/api/cases/${caseId}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          run_pcap_analysis: true,
+          run_groundhog_analysis: true,
+          run_correlation: true,
+          run_final_rca: true,
+        }),
+      });
+      connectWebSocket(caseId);
+    } catch (e) {
+      setError('Failed to re-run analysis: ' + e.message);
+    }
+  };
+
   const connectWebSocket = (id) => {
-    // Determine WS protocol based on current page protocol
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use window.location.host which includes port if present
     const wsUrl = `${protocol}//${window.location.host}/ws/${id}`;
-
-    // In dev with proxy, we might need to be explicit if proxy doesn't handle WS well
-    // But let's try relative/proxy first. 
-    // Actually, CRA proxy doesn't always handle WS automatically to the stored proxy.
-    // For cloud envs, relying on the same host but different path is safer if there's a gateway (like nginx).
-    // But here we are relying on CRA proxy. CRA proxy DOES support WS.
-    // However, we need to point to the *proxy target* for WS usually? 
-    // No, usually in dev we connect to dev server port, and it proxies.
-
-    // Let's hardcode localhost:8000 for WS if on localhost, else assume same origin (prod)
-    // BUT the user issue is "Failed to fetch" (HTTP), so let's fix HTTP first.
-    // For WS in cloud envs, it's tricky. Let's try to assume the backend is on the same host if we are running locally?
-    // No, let's use the explicit logic that works with the proxy:
-
-
-    // Wait, if I change http to relative, I should probably try to make WS relative too?
-    // But WS doesn't use the HTTP proxy middleware in the same way for Upgrade requests sometimes.
-
-    // Let's stick to the previous failing logic for WS *for now* but with localhost explicitly if we are sure?
-    // Actually, if I use "proxy", requests to /ws might be proxied if I configured it as manual setup setupProxy.js, 
-    // but just "proxy": "url" handles Accept: text/html exceptions.
-
-    // Let's try using the backend URL directly for WS since standard proxying might be flaky for WS without setupProxy.js
-    // Reverting to the logic that matches the backend location we know: localhost:8000 
-    // Since I am setting "proxy": "http://localhost:8000", the backend IS at localhost:8000.
     const ws = new WebSocket(wsUrl);
-
-    // NOTE: If the user is on a cloud IDE, they might not be able to connect to :8000 directly.
-    // They are seeing "Failed to fetch" which is HTTP. 
-    // If HTTP works via proxy, WS might fail if blocked.
-    // Let's fix HTTP first. I will leave WS as is for one step, or try to respect the proxy.
-
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-
         if (data.type === 'keepalive') return;
-
         setProgress(data.progress || 0);
         setStage(data.stage || '');
         setMessage(data.message || '');
@@ -95,7 +125,6 @@ function App() {
         if (data.progress === 100) {
           setTimeout(() => fetchResults(id), 500);
         }
-
         if (data.stage === 'failed') {
           setError(data.message);
         }
@@ -105,7 +134,6 @@ function App() {
     };
 
     ws.onerror = () => {
-      // Fallback to polling
       pollForResults(id);
     };
   };
@@ -117,9 +145,7 @@ function App() {
 
       if (data.status === 'completed') {
         setAnalysisData(data.results);
-        if (wsRef.current) {
-          wsRef.current.close();
-        }
+        if (wsRef.current) wsRef.current.close();
       } else if (data.status === 'failed') {
         setError(data.error || 'Analysis failed');
       }
@@ -133,7 +159,6 @@ function App() {
       try {
         const response = await fetch(`${API_URL}/api/analysis/${id}`);
         const data = await response.json();
-
         setProgress(data.progress || 0);
         setStage(data.stage || '');
 
@@ -152,23 +177,25 @@ function App() {
 
   const handleNewAnalysis = () => {
     setJobId(null);
+    setCaseId(null);
+    setFileKind(null);
     setAnalysisData(null);
     setProgress(0);
     setStage('');
     setMessage('');
     setError(null);
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
+    if (wsRef.current) wsRef.current.close();
   };
 
   useEffect(() => {
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (wsRef.current) wsRef.current.close();
     };
   }, []);
+
+  // Determine what to show on landing page
+  const showLanding = !jobId && !error && !fileKind;
+  const showCaseUpload = !jobId && !error && fileKind && caseId;
 
   return (
     <div className="app">
@@ -185,7 +212,7 @@ function App() {
               {apiStatus === 'ready' ? 'API Ready' : apiStatus === 'checking' ? 'Checking...' : 'API Error'}
             </div>
             <div className="status-pill success">AI Powered</div>
-            {(jobId || analysisData) && (
+            {(jobId || analysisData || fileKind) && (
               <button className="primary-ghost" onClick={handleNewAnalysis}>
                 🔄 New Analysis
               </button>
@@ -204,23 +231,59 @@ function App() {
           </div>
         )}
 
-        {!jobId && !error && (
+        {showLanding && (
           <section className="hero">
             <div className="hero-text">
               <p className="eyebrow">AI-Powered Diagnostics</p>
               <h2>Deep Analysis for Mobile Network Traffic</h2>
               <p className="lead">
-                Upload your PCAP captures and let DeepTrace detect protocols across 2G through 5G, identify session patterns, and deliver AI-powered root cause analysis with actionable recommendations.
+                Upload PCAP captures or Radio traces and let DeepTrace detect protocols across 2G through 5G,
+                correlate radio KPIs with signaling, and deliver AI-powered root cause analysis.
               </p>
               <ul className="hero-list">
                 <li>Full mobile stack: 2G/GSM → 3G/UMTS → 4G/LTE → 5G/NR</li>
-                <li>Protocol detection: GTP, Diameter, SIP, PFCP, NGAP, S1-AP & more</li>
-                <li>Structured AI insights with health scoring</li>
-                <li>Cross-plane session correlation</li>
+                <li>Radio trace analysis (HTML, CSV, XLS, XLSX, JSON, XML)</li>
+                <li>Cross-plane correlation: radio KPIs ↔ signaling events</li>
+                <li>Iterative analysis: start with PCAP or radio, add the other later</li>
               </ul>
             </div>
             <div className="hero-upload">
-              <FileUpload onUploadComplete={handleUploadComplete} apiUrl={API_URL} />
+              <div className="upload-choice-cards">
+                <div className="upload-card" onClick={() => handleStartWithFileKind('pcap')}>
+                  <div className="upload-card-icon">📡</div>
+                  <h3>Start with PCAP</h3>
+                  <p>Upload a network capture file (.pcap, .pcapng)</p>
+                </div>
+                <div className="upload-card" onClick={() => handleStartWithFileKind('groundhog')}>
+                  <div className="upload-card-icon">📻</div>
+                  <h3>Start with Radio Trace</h3>
+                  <p>Upload radio trace (HTML, CSV, XLS, XLSX, JSON, XML)</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {showCaseUpload && (
+          <section className="hero">
+            <div className="hero-text">
+              <p className="eyebrow">
+                {fileKind === 'pcap' ? '📡 PCAP Upload' : '📻 Radio Trace Upload'}
+              </p>
+              <h2>{fileKind === 'pcap' ? 'Upload Network Capture' : 'Upload Radio Trace'}</h2>
+              <p className="lead">
+                {fileKind === 'pcap'
+                  ? 'Drag and drop your PCAP capture file for analysis.'
+                  : 'Drag and drop your radio trace file.'}
+              </p>
+            </div>
+            <div className="hero-upload">
+              <FileUpload
+                onUploadComplete={handleCaseUploadComplete}
+                apiUrl={API_URL}
+                fileKind={fileKind}
+                caseId={caseId}
+              />
             </div>
           </section>
         )}
@@ -237,7 +300,11 @@ function App() {
           <ErrorBoundary>
             <Dashboard
               data={analysisData}
+              jobId={jobId}
+              caseId={caseId}
+              apiUrl={API_URL}
               onNewAnalysis={handleNewAnalysis}
+              onIterationUpload={handleIterationUpload}
             />
           </ErrorBoundary>
         )}
