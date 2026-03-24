@@ -1050,6 +1050,15 @@ async def analyze_case_task(
                     "packets": packets,
                 }
                 
+                # --- Advanced Pipeline Hook ---
+                try:
+                    from .advanced_pcap_pipeline import run_advanced_pipeline
+                    adv_ctx = await run_advanced_pipeline(str(pcap_path), flows, packets, None)
+                    pcap_results.update(adv_ctx)
+                except Exception as e:
+                    logger.error(f"Advanced PCAP Pipeline failed: {e}")
+
+                
                 case_manager.update_case_meta(case_id, {
                     "pcap": {**meta["pcap"], "analyzed": True}
                 })
@@ -1135,6 +1144,21 @@ async def analyze_case_task(
                 groundhog_summary=gh_summary_data,
                 correlation_report=corr_report_data,
                 radio_findings=radio_findings if radio_findings else None,
+                expert_findings=pcap_results.get("expert_findings") if pcap_results else None,
+                transactions=pcap_results.get("transactions") if pcap_results else None,
+                procedure_kpis=pcap_results.get("procedure_kpis") if pcap_results else None,
+                voice_context=pcap_results.get("voice_context") if pcap_results else None,
+                temporal_context=pcap_results.get("temporal_context") if pcap_results else None,
+                subscriber_context=pcap_results.get("subscriber_context") if pcap_results else None,
+                codec_context=pcap_results.get("codec_context") if pcap_results else None,
+                ringback_context=pcap_results.get("ringback_context") if pcap_results else None,
+                precondition_context=pcap_results.get("precondition_context") if pcap_results else None,
+                rtp_quality_context=pcap_results.get("rtp_quality_context") if pcap_results else None,
+                session_timer_context=pcap_results.get("session_timer_context") if pcap_results else None,
+                transfer_context=pcap_results.get("transfer_context") if pcap_results else None,
+                handover_context=pcap_results.get("handover_context") if pcap_results else None,
+                vendor_context=pcap_results.get("vendor_context") if pcap_results else None,
+                ran_context=pcap_results.get("ran_context") if pcap_results else None,
             )
             
             # Save RCA

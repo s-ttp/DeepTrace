@@ -8,7 +8,7 @@ The application follows a modern, decoupled architecture:
 
 *   **Frontend**: React 18 application for interactive visualization (Charts, Sequence Diagrams, Tables).
 *   **Backend**: FastAPI (Python) server handling async analysis tasks.
-*   **Deep Packet Inspection**: Integrates **TShark** (Wireshark) for detailed field extraction and **Scapy** for lightweight packet parsing.
+*   **Deep Packet Inspection**: Integrates **TShark** (Wireshark) for detailed field extraction, transaction building, temporal anomaly detection, subscriber tracking, node classification, and **Scapy** for lightweight packet parsing.
 *   **AI Engine**: Integrates with LLMs (OpenAI GPT / Moonshot Kimi) to provide semantic understanding of network failures.
 
 ## 🚀 Key Features
@@ -36,7 +36,11 @@ The application follows a modern, decoupled architecture:
 *   **Advanced Detection**:
     *   **One-Way Audio**: Identifies calls with unidirectional media flow.
     *   **Silent Calls**: Detects established calls with extremely low packet rates (<10pps).
-    *   **SRVCC**: Correlates SIP INFO messages with S1-AP HandoverRequired for Single Radio Voice Call Continuity analysis.
+    *   **SRVCC/CSFB Handovers**: Correlates SIP messages with S1-AP/NGAP procedures for Single Radio Voice Call Continuity and CSFB analysis.
+    *   **Codec Mismatch Detection**: Identifies SDP offer/answer mismatches or incompatible codecs between endpoints.
+    *   **Precondition Analysis**: Tracks SIP precondition states (RFC 3312) to diagnose call setup failures.
+    *   **Ringback Diagnosis**: Analyzes SIP 180/183 mapping with RTP presence to diagnose missing ringtones.
+    *   **Advanced Call Features**: Analyzes Session Timers (RFC 4028) and Call Transfers (RFC 3515).
 
 ### 🤖 AI-Driven Root Cause Analysis
 *   **Contextual Analysis**: Aggregates signaling errors, data throughput issues, and vendor-specific codes (e.g., Nokia/Huawei/Ericsson).

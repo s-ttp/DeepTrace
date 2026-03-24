@@ -463,6 +463,14 @@ async def root_cause_analysis(
 - Evaluate the network health EXCLUSIVELY based on the Groundhog Radio KPIs and Collision/Findings below.
 - Ignore any missing PCAP data; focus your diagnosis entirely on the provided UE-side/Radio evidence.
 """
+    elif summary.get("total_flows") and not groundhog_summary:
+        input_type_guidance = """
+**CRITICAL CONTEXT**: ONLY A PCAP TRACE WAS UPLOADED. NO GROUNDHOG RADIO DATA WAS PROVIDED.
+- Evaluate the network health EXCLUSIVELY based on the PCAP (Core/RAN signaling, Voice/IMS, and protocol errors) below.
+- Do NOT mark the overall analysis as INCONCLUSIVE solely because Radio KPIs, Groundhog traces, or RAN signaling are missing.
+- Perform a RIGOROUS analysis of the signaling plane. Even if there are no explicit Scapy "Errors", you must identify anomalies such as incomplete dialogs, missing expected protocols (e.g., missing RTP or Diameter), or suspicious flow durations.
+- If you find Call Drops, SIP errors, or Scapy/TShark protocol errors in the PCAP, use them to form a confident, conclusive executive narrative.
+"""
 
     prompt = f"""You are a telecom root cause analysis engine.
 {input_type_guidance}
@@ -556,10 +564,8 @@ async def root_cause_analysis(
 
 ## RADIO ANALYSIS GUARDRAILS (MANDATORY)
 - If Groundhog radio trace is NOT uploaded, state: "Radio KPIs not available - UE-side measurements not captured"
-- If RAN signaling is NOT in PCAP, state: "RAN signaling not captured at this observation point"
-- NEVER invent radio events not present in the evidence
-- Radio conclusions MUST be grounded in observed RAN evidence from Groundhog + RAN signaling
-- If a radio cause is NOT supported by Groundhog evidence OR RAN signaling evidence, mark it INCONCLUSIVE
+- If diagnosing a radio-specific issue (like RF degradation or RLF), conclusions MUST be grounded in observed RAN evidence from Groundhog + RAN signaling.
+- HOWEVER, if this is a Core Network failure (SIP, IMS, GTP, Diameter) or PCAP-only trace, diagnose it confidently using PCAP evidence without requiring radio data.
 
 ## DEEP TRANSACTIONS (Sample)
 {json.dumps(top_transactions, indent=2, default=str) if top_transactions else "No detailed transactions available."}
@@ -611,9 +617,9 @@ Score each root cause with a confidence percentage:
 Provide a STRUCTURED analysis with the following JSON format (respond ONLY with valid JSON):
 
 {{
-  "executive_narrative": "A conclusive, decisive 3-4 sentence paragraph explaining the exact sequence of events that led to the fault. Synthesize the correlation timeline and deterministic radio findings into a clear story.",
+  "executive_narrative": "A conclusive, decisive 3-4 sentence paragraph explaining the exact sequence of events that led to the fault, or a detailed breakdown of the network behavior if no explicit fault exists. Synthesize the correlation timeline and evidence into a clear story.",
   "contributing_factors": [
-    "List 2-4 key technical factors contributing to the event (e.g., 'Degrading RF conditions...', 'Frequent SgNB Modifications...')"
+    "List 2-4 key technical factors contributing to the event or anomaly (e.g., 'Incomplete SIP dialogs...', 'Missing Media Plane...')"
   ],
   "classification": "ESTABLISHED|CANCELLED_BY_CALLER|REJECTED|INCOMPLETE|INCONCLUSIVE",
   "health_score": <number 0-100>,
