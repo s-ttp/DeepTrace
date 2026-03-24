@@ -1,6 +1,6 @@
 # DeepTrace - Intelligent Mobile Network Analysis
 
-DeepTrace is a comprehensive tool for analyzing mobile network traffic (2G, 3G, 4G LTE, 5G SA) from PCAP files. It combines deep packet inspection (DPI) with AI-driven Root Cause Analysis (RCA) to diagnose network failures, voice quality issues, and performance bottlenecks.
+DeepTrace is a comprehensive tool for analyzing both mobile core network traffic from PCAP files and UE-side radio traces (e.g., Groundhog/CovMo) across 2G, 3G, 4G LTE, and 5G SA networks. By performing cross-plane correlation between core signaling and radio events, it combines deep packet inspection (DPI) with AI-driven Root Cause Analysis (RCA) to precisely diagnose complex network failures, voice quality issues, and performance bottlenecks.
 
 ## 🏗️ High-Level Architecture
 
