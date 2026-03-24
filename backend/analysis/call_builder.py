@@ -38,6 +38,10 @@ class CallBuilder:
         registrations = {} # Key: call_id
         calls = {} # Key: call_id
         
+        logger.info(f"CALL BUILDER RECEIVED {len(transactions)} total transactions.")
+        sip_count = sum(1 for t in transactions if t.get("protocol") == "SIP")
+        logger.info(f"CALL BUILDER FOUND {sip_count} SIP transactions.")
+        
         # Pass 1: Build Objects
         for tx in transactions:
             if tx.get("protocol") != "SIP":
