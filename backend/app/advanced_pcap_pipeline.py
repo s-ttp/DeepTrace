@@ -35,6 +35,17 @@ async def run_advanced_pipeline(file_path, flows, packets, broadcast_cb=None):
     expert_findings = []
     ran_context = ""
     vendor_context = ""
+    # Phase 2 contexts (deeper analysis)
+    pfcp_context = ""
+    diameter_app_context = ""
+    subscriber_journey_context = ""
+    ho_quality_context = ""
+    slicing_context = ""
+    sbi_context = ""
+    trend_context = ""
+    # Flow-diagram payloads (default to empty when TShark isn't available)
+    message_sequence = []
+    sequence_diagram_override = ""
 
     if tshark_available():
         if broadcast_cb:
@@ -66,12 +77,82 @@ async def run_advanced_pipeline(file_path, flows, packets, broadcast_cb=None):
             
             subscriber_data = await asyncio.to_thread(analyze_subscriber_journeys, tshark_transactions)
             subscriber_llm_context = format_subscriber_llm(subscriber_data)
-            
+            subscriber_journey_context = subscriber_data.get("journey_context_for_llm", "") if isinstance(subscriber_data, dict) else ""
+
+            # Phase 2 deep analysers
+            try:
+                from analysis.pfcp_analyzer import analyze_pfcp, format_pfcp_context_for_llm
+                pfcp_summary = await asyncio.to_thread(analyze_pfcp, tshark_transactions)
+                pfcp_context = format_pfcp_context_for_llm(pfcp_summary)
+            except Exception as e:
+                logger.warning(f"PFCP analysis failed: {e}")
+
+            try:
+                from analysis.diameter_analyzer import analyze_diameter, format_diameter_context_for_llm
+                diameter_summary = await asyncio.to_thread(analyze_diameter, tshark_transactions)
+                diameter_app_context = format_diameter_context_for_llm(diameter_summary)
+            except Exception as e:
+                logger.warning(f"Diameter app analysis failed: {e}")
+
+            try:
+                from analysis.slicing_analyzer import analyze_slicing, format_slicing_context_for_llm
+                slicing_summary = await asyncio.to_thread(analyze_slicing, tshark_transactions)
+                slicing_context = format_slicing_context_for_llm(slicing_summary)
+            except Exception as e:
+                logger.warning(f"Slicing analysis failed: {e}")
+
+            try:
+                from analysis.ho_quality_analyzer import analyze_handover_quality, format_ho_quality_context_for_llm
+                ho_quality_summary = await asyncio.to_thread(analyze_handover_quality, tshark_transactions, None)
+                ho_quality_context = format_ho_quality_context_for_llm(ho_quality_summary)
+            except Exception as e:
+                logger.warning(f"HO quality analysis failed: {e}")
+
+            try:
+                from analysis.sbi_analyzer import analyze_sbi, format_sbi_context_for_llm
+                sbi_summary = await asyncio.to_thread(analyze_sbi, tshark_transactions)
+                sbi_context = format_sbi_context_for_llm(sbi_summary)
+            except Exception as e:
+                logger.warning(f"SBI analysis failed: {e}")
+
+            try:
+                from analytics.trend_detector import detect_trends, format_trends_for_llm
+                trend_summary = await asyncio.to_thread(detect_trends, tshark_transactions)
+                trend_context = format_trends_for_llm(trend_summary)
+            except Exception as e:
+                logger.warning(f"Trend detection failed: {e}")
+
             from .node_classifier import classify_network_nodes
             node_map = await classify_network_nodes(tshark_transactions)
-            
+
         except Exception as e:
             logger.warning(f"TShark transaction build failed: {e}")
+
+        # Build the chronological message_sequence the dashboard's FlowDiagram
+        # and Mermaid override consume. Build it from TShark transactions
+        # (not Scapy packets) — Scapy doesn't dissect SIP/Diameter, so
+        # extract_message_sequence loses method/status info on those flows.
+        message_sequence = []
+        try:
+            from .telecom_analyzer import build_message_sequence_from_transactions
+            message_sequence = await asyncio.to_thread(
+                build_message_sequence_from_transactions,
+                tshark_transactions, node_map, 100,
+            )
+        except Exception as e:
+            logger.warning(f"message_sequence build failed: {e}")
+
+        # Pre-build a deterministic Mermaid sequenceDiagram. The LLM tends to
+        # hallucinate a one-box "IMS Core" diagram for PCAP cases; override
+        # it with one driven by the actual chronological events.
+        sequence_diagram_override = ""
+        try:
+            from .imstrace.huawei_html import build_mermaid_from_sequence
+            sequence_diagram_override = build_mermaid_from_sequence(
+                message_sequence, max_steps=40
+            )
+        except Exception as e:
+            logger.warning(f"PCAP Mermaid build failed: {e}")
 
         # --- Voice/IMS Analysis ---
         try:
@@ -223,6 +304,12 @@ async def run_advanced_pipeline(file_path, flows, packets, broadcast_cb=None):
             for pattern, info in huawei_patterns.items():
                 if not pattern.startswith("_"):
                     vendor_lines.append(f"- `{pattern}`: {info.get('component', 'Unknown')} - {info.get('meaning', 'Unknown')}")
+            eri_patterns = vendor_mappings.get("ericsson_text_patterns", {})
+            if eri_patterns:
+                vendor_lines.append("### Ericsson (proprietary patterns)")
+                for pattern, info in eri_patterns.items():
+                    if not pattern.startswith("_"):
+                        vendor_lines.append(f"- `{pattern}`: {info.get('component', 'Unknown')} - {info.get('meaning', 'Unknown')}")
             vendor_lines.append("**IMPORTANT**: When you see `X.int;reasoncode=0x00000000`, map it to 'Normal clearing' (Nokia MSS).")
             vendor_lines.append("When you see `X.int;reasoncode=0x00000603`, map it to 'Call release' (Nokia MSS).")
             vendor_context = "\n".join(vendor_lines)
@@ -247,6 +334,15 @@ async def run_advanced_pipeline(file_path, flows, packets, broadcast_cb=None):
        "handover_context": handover_context,
        "vendor_context": vendor_context,
        "ran_context": ran_context,
+       "pfcp_context": pfcp_context,
+       "diameter_app_context": diameter_app_context,
+       "subscriber_journey_context": subscriber_journey_context,
+       "ho_quality_context": ho_quality_context,
+       "slicing_context": slicing_context,
+       "sbi_context": sbi_context,
+       "trend_context": trend_context,
+       "message_sequence": message_sequence,
+       "sequence_diagram_override": sequence_diagram_override,
        "voice_calls": voice_calls,
        "registrations": registrations,
        "media_streams": media_streams,

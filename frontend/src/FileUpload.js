@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 
 const PCAP_EXTENSIONS = ['.pcap', '.pcapng'];
 const GROUNDHOG_EXTENSIONS = ['.html', '.htm', '.csv', '.xls', '.xlsx', '.json', '.xml'];
+const HUAWEI_IMS_EXTENSIONS = ['.zip', '.ptmf'];
 
 const FILE_KIND_CONFIG = {
   pcap: {
@@ -17,6 +18,13 @@ const FILE_KIND_CONFIG = {
     label: 'Radio Trace',
     description: 'Drop your radio trace file (HTML, CSV, XLS, XLSX, JSON, XML)',
     icon: '📻',
+  },
+  huawei_ims: {
+    accept: HUAWEI_IMS_EXTENSIONS.join(','),
+    extensions: HUAWEI_IMS_EXTENSIONS,
+    label: 'Huawei IMS Trace',
+    description: 'Drop a Huawei Service Trace .zip OR an NE .ptmf binary trace',
+    icon: '🧬',
   },
 };
 

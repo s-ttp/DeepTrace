@@ -62,16 +62,16 @@ def get_nokia_code_label(reasoncode: str) -> Optional[str]:
 def get_huawei_pattern_info(text: str) -> Optional[Dict[str, str]]:
     """
     Match Huawei proprietary text pattern.
-    
+
     Args:
         text: Text from SIP Reason header
-    
+
     Returns:
         Dict with component and meaning, or None
     """
     mappings = load_vendor_mappings()
     patterns = mappings.get("huawei_text_patterns", {})
-    
+
     text_lower = text.lower()
     for pattern, info in patterns.items():
         if pattern.startswith("_"):  # Skip meta fields
@@ -82,7 +82,26 @@ def get_huawei_pattern_info(text: str) -> Optional[Dict[str, str]]:
                 "component": info.get("component", "Unknown"),
                 "meaning": info.get("meaning", "Unknown")
             }
-    
+
+    return None
+
+
+def get_ericsson_pattern_info(text: str) -> Optional[Dict[str, str]]:
+    """Match Ericsson MSC-S/MGW/RNC/BSC/SBG/OCS proprietary reason patterns."""
+    if not text:
+        return None
+    mappings = load_vendor_mappings()
+    patterns = mappings.get("ericsson_text_patterns", {})
+    text_lower = text.lower()
+    for pattern, info in patterns.items():
+        if pattern.startswith("_"):
+            continue
+        if pattern.lower() in text_lower:
+            return {
+                "pattern": pattern,
+                "component": info.get("component", "Unknown"),
+                "meaning": info.get("meaning", "Unknown"),
+            }
     return None
 
 
@@ -120,7 +139,14 @@ def map_vendor_reason(reason_parsed: Dict[str, Any]) -> Dict[str, Any]:
         if huawei_info:
             result["vendor_info"] = huawei_info
             result["vendor_label"] = f"Huawei {huawei_info['component']}: {huawei_info['meaning']}"
-    
+
+    # Ericsson text patterns (Q.850;cause=*, EAI;reason=*, OCS/MGW/RNC/BSC patterns)
+    if text:
+        eri_info = get_ericsson_pattern_info(text)
+        if eri_info:
+            result["vendor_info"] = eri_info
+            result["vendor_label"] = f"Ericsson {eri_info['component']}: {eri_info['meaning']}"
+
     return result
 
 

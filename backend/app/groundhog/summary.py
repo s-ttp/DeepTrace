@@ -46,16 +46,30 @@ def generate_summary(events: List[Dict[str, Any]]) -> Dict[str, Any]:
     sinr_values = []
     dl_tp_values = []
     ul_tp_values = []
-    
+    # AMC / link adaptation indicators (Phase 2a.2)
+    cqi_values = []
+    mcs_dl_values = []
+    mcs_ul_values = []
+    bler_dl_values = []
+    bler_ul_values = []
+    harq_nack_count = 0
+    harq_ack_count = 0
+
+    def _to_float(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
     for event in events:
         event_types[event.get("event_type", "UNKNOWN")] += 1
         generations[event.get("generation", "UNKNOWN")] += 1
         rats[event.get("rat", "UNKNOWN")] += 1
-        
+
         epoch = event.get("time_epoch")
         if epoch:
             epochs.append(epoch)
-        
+
         if event.get("imsi"):
             imsis.add(event["imsi"])
         if event.get("guti"):
@@ -64,7 +78,7 @@ def generate_summary(events: List[Dict[str, Any]]) -> Dict[str, Any]:
             cell_ids.add(event["cell_id"])
         if event.get("ue_ip"):
             ue_ips.add(event["ue_ip"])
-        
+
         if event.get("rsrp") is not None:
             rsrp_values.append(event["rsrp"])
         if event.get("rsrq") is not None:
@@ -75,6 +89,46 @@ def generate_summary(events: List[Dict[str, Any]]) -> Dict[str, Any]:
             dl_tp_values.append(event["throughput_dl_kbps"])
         if event.get("throughput_ul_kbps") is not None:
             ul_tp_values.append(event["throughput_ul_kbps"])
+
+        if event.get("cqi") is not None:
+            v = _to_float(event["cqi"])
+            if v is not None:
+                cqi_values.append(v)
+        if event.get("dl_bler") is not None:
+            v = _to_float(event["dl_bler"])
+            if v is not None:
+                bler_dl_values.append(v)
+        if event.get("ul_bler") is not None:
+            v = _to_float(event["ul_bler"])
+            if v is not None:
+                bler_ul_values.append(v)
+
+        raw = event.get("raw") or {}
+        if isinstance(raw, dict):
+            for k in ("mcs_dl", "MCS_DL", "dl_mcs", "DL_MCS"):
+                if raw.get(k) is not None:
+                    v = _to_float(raw[k])
+                    if v is not None:
+                        mcs_dl_values.append(v)
+                        break
+            for k in ("mcs_ul", "MCS_UL", "ul_mcs", "UL_MCS"):
+                if raw.get(k) is not None:
+                    v = _to_float(raw[k])
+                    if v is not None:
+                        mcs_ul_values.append(v)
+                        break
+            for k in ("harq_nack", "HARQ_NACK", "harq_nack_count"):
+                if raw.get(k) is not None:
+                    v = _to_float(raw[k])
+                    if v is not None:
+                        harq_nack_count += int(v)
+                        break
+            for k in ("harq_ack", "HARQ_ACK", "harq_ack_count"):
+                if raw.get(k) is not None:
+                    v = _to_float(raw[k])
+                    if v is not None:
+                        harq_ack_count += int(v)
+                        break
     
     # Build summary
     summary = {
@@ -87,14 +141,14 @@ def generate_summary(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         "event_type_counts": dict(event_types.most_common()),
         "generation_counts": dict(generations.most_common()),
         "rat_counts": dict(rats.most_common()),
+        # Privacy: never embed raw identifier values in the summary that
+        # gets persisted to disk and returned via the API. Counts only.
+        # Pseudonyms for individual events live on the events themselves.
         "identifiers_found": {
             "imsi_count": len(imsis),
-            "imsi_list": sorted(imsis)[:10],
             "guti_count": len(gutis),
             "cell_id_count": len(cell_ids),
-            "cell_id_list": sorted(cell_ids)[:20],
             "ue_ip_count": len(ue_ips),
-            "ue_ip_list": sorted(ue_ips)[:10],
         },
     }
     
@@ -110,10 +164,38 @@ def generate_summary(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         kpis["throughput_dl_kbps"] = _stat_summary(dl_tp_values, "kbps")
     if ul_tp_values:
         kpis["throughput_ul_kbps"] = _stat_summary(ul_tp_values, "kbps")
-    
+    if cqi_values:
+        kpis["cqi"] = _stat_summary(cqi_values, "index")
+    if bler_dl_values:
+        kpis["dl_bler"] = _stat_summary(bler_dl_values, "%")
+    if bler_ul_values:
+        kpis["ul_bler"] = _stat_summary(bler_ul_values, "%")
+    if mcs_dl_values:
+        kpis["mcs_dl"] = _stat_summary(mcs_dl_values, "index")
+    if mcs_ul_values:
+        kpis["mcs_ul"] = _stat_summary(mcs_ul_values, "index")
+
     if kpis:
         summary["kpi_statistics"] = kpis
-    
+
+    # Distributions for AMC / link-adaptation analysis (Phase 2a.2)
+    distributions = {}
+    if cqi_values:
+        distributions["cqi_bands"] = _cqi_bands(cqi_values)
+    if bler_dl_values:
+        distributions["dl_bler_bands"] = _bler_bands(bler_dl_values)
+    if mcs_dl_values:
+        distributions["mcs_dl_bands"] = _mcs_bands(mcs_dl_values)
+    if harq_ack_count + harq_nack_count > 0:
+        total = harq_ack_count + harq_nack_count
+        distributions["harq"] = {
+            "ack": harq_ack_count,
+            "nack": harq_nack_count,
+            "nack_ratio_pct": round(100.0 * harq_nack_count / total, 2),
+        }
+    if distributions:
+        summary["radio_kpi_distributions"] = distributions
+
     # Radio issue highlights
     radio_issues = {}
     for et in ["RLF", "HO_FAIL", "PAGING", "RRC_REESTABLISHMENT", "CSFB", "SRVCC"]:
@@ -135,6 +217,51 @@ def _stat_summary(values: list, unit: str) -> Dict[str, Any]:
         "avg": round(sum(values) / len(values), 2),
         "unit": unit,
     }
+
+
+def _band(values: list, bands: list) -> Dict[str, int]:
+    """Bucket numeric values into named bands. `bands` is list of (label, lo, hi)
+    pairs (inclusive lo, exclusive hi). Last band's hi is treated as inclusive."""
+    counts = {label: 0 for label, _, _ in bands}
+    for v in values:
+        for label, lo, hi in bands:
+            if lo <= v < hi:
+                counts[label] += 1
+                break
+        else:
+            counts[bands[-1][0]] += 1
+    total = sum(counts.values()) or 1
+    return {label: {"count": n, "pct": round(100.0 * n / total, 1)} for label, n in counts.items()}
+
+
+def _cqi_bands(values: list) -> Dict[str, Any]:
+    # 3GPP TS 36.213 4-bit CQI: 0=out of range, 1-6=poor, 7-9=fair, 10-12=good, 13-15=excellent
+    return _band(values, [
+        ("out_of_range", -0.1, 1),
+        ("poor", 1, 7),
+        ("fair", 7, 10),
+        ("good", 10, 13),
+        ("excellent", 13, 16),
+    ])
+
+
+def _bler_bands(values: list) -> Dict[str, Any]:
+    return _band(values, [
+        ("ok_lt_2pct", 0, 2),
+        ("warning_2_10pct", 2, 10),
+        ("high_10_25pct", 10, 25),
+        ("critical_gt_25pct", 25, 101),
+    ])
+
+
+def _mcs_bands(values: list) -> Dict[str, Any]:
+    # LTE MCS 0-9 = QPSK, 10-16 = 16QAM, 17-28 = 64QAM, 29-31 = retransmission/special
+    return _band(values, [
+        ("qpsk_0_9", 0, 10),
+        ("qam16_10_16", 10, 17),
+        ("qam64_17_28", 17, 29),
+        ("special_29_31", 29, 32),
+    ])
 
 
 def save_summary(summary: Dict[str, Any], output_path: str):

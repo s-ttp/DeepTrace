@@ -6,7 +6,7 @@ import json
 import logging
 from typing import Dict, Any, Optional, List
 
-from ..llm_service import get_llm_client
+from ..llm_service import chat_complete
 from .prompts import (
     TRACE_MODE_SYSTEM,
     EXPLAINER_MODE_SYSTEM,
@@ -53,22 +53,17 @@ async def chat_query(
         user_prompt = format_explainer_prompt(context_json, user_message)
     
     try:
-        client = get_llm_client()
-        
-        # Use Kimi K2.5 with temperature=1 (API requirement)
-        completion = client.chat.completions.create(
-            model="kimi-k2.5",
+        result = chat_complete(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
             ],
-            temperature=1,  # Required by Kimi API
-            max_tokens=1200
+            max_tokens=1200,
+            temperature=1.0,
         )
-        
-        answer = completion.choices[0].message.content
-        
-        if answer is None:
+
+        answer = result.content
+        if not answer:
             answer = "I was unable to generate a response. Please try rephrasing your question."
         
         # Extract citations if present (look for evidence markers)

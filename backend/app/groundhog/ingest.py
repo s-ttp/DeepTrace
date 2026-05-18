@@ -13,6 +13,7 @@ from typing import Dict, Any, Optional
 
 from .normalize import normalize_rows
 from .summary import generate_summary, save_summary
+from .anonymise import redact_events
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +109,14 @@ def ingest_groundhog(
     
     if not events:
         raise ValueError("No valid events after normalization (all timestamp parsing failed)")
-    
-    # 4. Generate summary
+
+    # 4. Summarise BEFORE anonymisation (so identifier counts are accurate),
+    #    then anonymise the events themselves. Every downstream consumer
+    #    (disk artifacts, API responses, LLM prompts, correlation) sees only
+    #    pseudonyms — raw IMSI/MSISDN/GUTI/TMSI/IMEI/UE_IP values never leave
+    #    this function.
     summary = generate_summary(events)
+    events = redact_events(events)
     
     # 5. Save artifacts if output_dir provided
     if output_dir:

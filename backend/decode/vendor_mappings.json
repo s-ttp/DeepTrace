@@ -1,5 +1,5 @@
 {
-  "_comment": "Vendor-specific reason code mappings for Nokia MSS and Huawei IMS",
+  "_comment": "Vendor-specific reason code mappings",
   "X.int": {
     "_vendor": "Nokia",
     "_format": "hex",
@@ -14,21 +14,37 @@
   },
   "huawei_text_patterns": {
     "_comment": "Proprietary text patterns in SIP Reason header",
-    "RELEASE FROM CC": {
-      "component": "Call Control",
-      "meaning": "Internal release"
-    },
-    "query adb failed": {
-      "component": "HSS",
-      "meaning": "Subscriber lookup failed"
-    },
-    "No Prack received": {
-      "component": "SCSCF",
-      "meaning": "PRACK timeout"
-    },
-    "Invalid number format": {
-      "component": "AS",
-      "meaning": "Address incomplete"
-    }
+    "RELEASE FROM CC": {"component": "Call Control", "meaning": "Internal release"},
+    "query adb failed":  {"component": "HSS", "meaning": "Subscriber lookup failed"},
+    "No Prack received": {"component": "SCSCF", "meaning": "PRACK timeout"},
+    "Invalid number format": {"component": "AS", "meaning": "Address incomplete"}
+  },
+  "ericsson_text_patterns": {
+    "_vendor": "Ericsson",
+    "_comment": "MSC-S, MGW, BSC, RNC, SBG/IMS, vEPC proprietary reason strings observed in SIP/H.248/SCCP",
+    "Q.850;cause=16":          {"component": "MSC-S", "meaning": "Normal call clearing (Q.850 mapped)"},
+    "Q.850;cause=17":          {"component": "MSC-S", "meaning": "User busy"},
+    "Q.850;cause=18":          {"component": "MSC-S", "meaning": "No user responding"},
+    "Q.850;cause=19":          {"component": "MSC-S", "meaning": "No answer from user"},
+    "Q.850;cause=21":          {"component": "MSC-S", "meaning": "Call rejected"},
+    "Q.850;cause=27":          {"component": "MSC-S", "meaning": "Destination out of order"},
+    "Q.850;cause=28":          {"component": "MSC-S", "meaning": "Invalid number format / address incomplete"},
+    "Q.850;cause=31":          {"component": "MSC-S", "meaning": "Normal unspecified"},
+    "Q.850;cause=34":          {"component": "MSC-S", "meaning": "No circuit/channel available"},
+    "Q.850;cause=38":          {"component": "MSC-S", "meaning": "Network out of order"},
+    "Q.850;cause=41":          {"component": "MSC-S", "meaning": "Temporary failure"},
+    "Q.850;cause=42":          {"component": "MSC-S", "meaning": "Switching equipment congestion"},
+    "Q.850;cause=47":          {"component": "MSC-S", "meaning": "Resource unavailable, unspecified"},
+    "Q.850;cause=87":          {"component": "MSC-S", "meaning": "User not member of CUG"},
+    "Q.850;cause=102":         {"component": "MSC-S", "meaning": "Recovery on timer expiry"},
+    "EAI;reason=cancel":       {"component": "Ericsson SBG", "meaning": "Caller cancelled before connect"},
+    "EAI;reason=offnet":       {"component": "Ericsson SBG", "meaning": "Off-network release"},
+    "EAI;reason=tnoresp":      {"component": "Ericsson SBG", "meaning": "Terminating side no response"},
+    "OCS;cause=quota_exhaust": {"component": "Ericsson OCS", "meaning": "Online charging quota exhausted"},
+    "OCS;cause=credit_limit":  {"component": "Ericsson OCS", "meaning": "Credit limit reached"},
+    "AMR;cause=transcode_fail":{"component": "Ericsson MGW", "meaning": "AMR transcoding failure"},
+    "RNC;cause=ul_sync_lost":  {"component": "Ericsson RNC", "meaning": "Uplink synchronisation lost"},
+    "RNC;cause=preempt":       {"component": "Ericsson RNC", "meaning": "Bearer pre-empted by higher-priority call"},
+    "BSC;cause=ho_attempt_fail":{"component": "Ericsson BSC", "meaning": "Handover attempt failed"}
   }
 }

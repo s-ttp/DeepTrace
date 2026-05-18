@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 import shutil
 import json
@@ -22,6 +22,8 @@ from .pcap_parser import parse_pcap
 from .telecom_analyzer import analyze_flows, get_protocol_stats, get_technology_stats, identify_telecom_sessions, correlate_sessions, extract_message_sequence, get_failure_summary, format_session_for_export
 from .llm_service import enrich_with_llm, root_cause_analysis
 from .chat.router import router as chat_router
+from .admin.router import router as admin_router
+from . import report as report_mod
 from decode.tshark import tshark_available, get_tshark_stats
 from . import case_manager
 from .groundhog import ingest_groundhog
@@ -132,6 +134,12 @@ async def lifespan(app: FastAPI):
     # Startup
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     logger.info(f"Upload directory: {UPLOAD_DIR}")
+    # Real-time troubleshooting design: clear any leftover on-disk case state
+    # from a previous run. The daily 23:00 cron restart triggers this too.
+    wiped = case_manager.wipe_all_cases()
+    if wiped["cases_removed"] or wiped["uploads_removed"]:
+        logger.info("Startup wipe: removed %d case(s) and %d upload file(s)",
+                    wiped["cases_removed"], wiped["uploads_removed"])
     logger.info("PCAP Analyzer backend started")
     yield
     # Shutdown
@@ -157,6 +165,27 @@ app.add_middleware(
 
 # Include chat router
 app.include_router(chat_router, prefix="/api/chat")
+
+# Include admin router (LLM provider/model management)
+app.include_router(admin_router, prefix="/api/admin/llm")
+
+# Static admin page (served before the React catch-all)
+ADMIN_PAGE_PATH = Path(__file__).parent / "admin_static" / "llm.html"
+
+
+@app.get("/admin/llm")
+async def admin_llm_page():
+    return FileResponse(ADMIN_PAGE_PATH)
+
+
+@app.get("/report/{case_id}")
+async def case_report(case_id: str):
+    """Print-friendly HTML report. User saves as PDF via the browser."""
+    from fastapi.responses import HTMLResponse
+    try:
+        return HTMLResponse(report_mod.render_report_html(case_id))
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Case not found")
 
 
 async def broadcast_progress(job_id: str, progress: int, message: str, stage: str = "processing"):
@@ -585,7 +614,14 @@ async def analyze_pcap_task(job_id: str, file_path: str, filename: str):
             for pattern, info in huawei_patterns.items():
                 if not pattern.startswith("_"):
                     vendor_lines.append(f"- `{pattern}`: {info.get('component', 'Unknown')} - {info.get('meaning', 'Unknown')}")
-            
+
+            vendor_lines.append("")
+            vendor_lines.append("### Ericsson MSC-S / MGW / RNC / BSC / SBG / OCS (proprietary text patterns)")
+            eri_patterns = vendor_mappings.get("ericsson_text_patterns", {})
+            for pattern, info in eri_patterns.items():
+                if not pattern.startswith("_"):
+                    vendor_lines.append(f"- `{pattern}`: {info.get('component', 'Unknown')} - {info.get('meaning', 'Unknown')}")
+
             vendor_lines.append("")
             vendor_lines.append("**IMPORTANT**: When you see `X.int;reasoncode=0x00000000`, map it to 'Normal clearing' (Nokia MSS).")
             vendor_lines.append("When you see `X.int;reasoncode=0x00000603`, map it to 'Call release' (Nokia MSS).")
@@ -850,7 +886,17 @@ async def delete_analysis(job_id: str):
 
 @app.post("/api/cases")
 async def create_case():
-    """Create a new analysis case. Returns case_id."""
+    """Create a new analysis case. Returns case_id.
+
+    Real-time-only design: wipe every existing case from disk before creating
+    the new one, so the artifacts/ directory holds at most the active case.
+    Also clears in-memory `analyses` entries for those cases.
+    """
+    wiped = case_manager.wipe_all_cases()
+    if wiped["cases_removed"] or wiped["uploads_removed"]:
+        logger.info("New-case wipe: removed %d case(s) and %d upload file(s)",
+                    wiped["cases_removed"], wiped["uploads_removed"])
+    analyses.clear()
     meta = case_manager.create_case()
     return {"case_id": meta["case_id"], "status": "created"}
 
@@ -861,14 +907,14 @@ async def get_case(case_id: str):
     meta = case_manager.get_case(case_id)
     if meta is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    
+
     # Add analysis results if available
     if case_id in analyses:
         meta["analysis"] = {
             "status": analyses[case_id].get("status"),
             "progress": analyses[case_id].get("progress"),
         }
-    
+
     return meta
 
 
@@ -890,16 +936,23 @@ async def upload_case_file(
     if meta is None:
         raise HTTPException(status_code=404, detail="Case not found")
     
-    if file_kind not in ("pcap", "groundhog"):
-        raise HTTPException(status_code=400, detail="file_kind must be 'pcap' or 'groundhog'")
-    
+    if file_kind not in ("pcap", "groundhog", "huawei_ims"):
+        raise HTTPException(status_code=400, detail="file_kind must be 'pcap', 'groundhog' or 'huawei_ims'")
+
     # Validate file
     if not file.filename:
         raise HTTPException(status_code=400, detail="No filename provided")
-    
+
     if file_kind == "pcap":
         if not (file.filename.lower().endswith('.pcap') or file.filename.lower().endswith('.pcapng')):
             raise HTTPException(status_code=400, detail="PCAP files must be .pcap or .pcapng")
+    elif file_kind == "huawei_ims":
+        fn = file.filename.lower()
+        if not (fn.endswith('.zip') or fn.endswith('.ptmf')):
+            raise HTTPException(
+                status_code=400,
+                detail="Huawei IMS trace must be a .zip (Service Trace) or .ptmf (NE-side binary trace).",
+            )
     else:
         valid_exts = ['.html', '.htm', '.csv', '.xls', '.xlsx', '.json', '.xml']
         if not any(file.filename.lower().endswith(ext) for ext in valid_exts):
@@ -928,6 +981,9 @@ async def upload_case_file(
     ext = os.path.splitext(file.filename)[1].lower()
     if file_kind == "pcap":
         case_manager.register_pcap(case_id, file.filename, str(file_path))
+    elif file_kind == "huawei_ims":
+        fmt = "ptmf" if file.filename.lower().endswith(".ptmf") else "huawei_html_zip"
+        case_manager.register_huawei_ims(case_id, file.filename, str(file_path), fmt=fmt)
     else:
         case_manager.register_groundhog(case_id, file.filename, str(file_path), ext.lstrip('.'))
     
@@ -959,7 +1015,7 @@ async def analyze_case(
         raise HTTPException(status_code=404, detail="Case not found")
     
     # Check if anything is uploaded
-    if not meta.get("pcap") and not meta.get("groundhog"):
+    if not meta.get("pcap") and not meta.get("groundhog") and not meta.get("huawei_ims"):
         raise HTTPException(status_code=400, detail="No files uploaded to this case")
     
     # Initialize analysis tracking
@@ -969,7 +1025,9 @@ async def analyze_case(
         "status": "processing",
         "progress": 0,
         "stage": "starting",
-        "filename": (meta.get("pcap") or {}).get("filename") or (meta.get("groundhog") or {}).get("filename", "unknown"),
+        "filename": ((meta.get("pcap") or {}).get("filename")
+                     or (meta.get("groundhog") or {}).get("filename")
+                     or (meta.get("huawei_ims") or {}).get("filename", "unknown")),
         "results": None,
         "error": None,
     }
@@ -1002,6 +1060,7 @@ async def analyze_case_task(
         radio_findings = []
         
         total_steps = sum([run_pcap and meta.get("pcap") is not None,
+                           run_pcap and meta.get("huawei_ims") is not None,
                            run_groundhog and meta.get("groundhog") is not None,
                            run_corr, run_rca])
         step = 0
@@ -1062,7 +1121,42 @@ async def analyze_case_task(
                 case_manager.update_case_meta(case_id, {
                     "pcap": {**meta["pcap"], "analyzed": True}
                 })
-        
+
+        # --- Step 1b: Huawei IMS core trace (.zip Service Trace OR .ptmf NE trace) ---
+        if meta.get("huawei_ims") and run_pcap:
+            step += 1
+            progress = int((step / max(total_steps, 1)) * 60)
+            analyses[case_id]["progress"] = progress
+            analyses[case_id]["stage"] = "huawei_ims_analysis"
+            await broadcast_progress(case_id, progress, "Parsing Huawei IMS trace...", "huawei_ims_analysis")
+            try:
+                from .imstrace.pipeline import run_huawei_pipeline
+                hw_path = meta["huawei_ims"]["file_path"]
+                out_dir = str(case_dir / "huawei_ims")
+                # Dispatch by file format: .ptmf is the NE-side binary trace;
+                # everything else (default .zip) is the Service Trace bundle.
+                fmt = (meta["huawei_ims"].get("format") or "").lower()
+                if fmt == "ptmf" or hw_path.lower().endswith(".ptmf"):
+                    from .imstrace.huawei_ptmf import ingest_huawei_ptmf
+                    hw = await asyncio.to_thread(ingest_huawei_ptmf, hw_path, out_dir)
+                    source_label = "PTMF NE trace"
+                else:
+                    from .imstrace import ingest_huawei_ims
+                    hw = await asyncio.to_thread(ingest_huawei_ims, hw_path, out_dir)
+                    source_label = "Service Trace .zip"
+                pcap_results = await run_huawei_pipeline(hw["transactions"], hw["summary"])
+                case_manager.update_case_meta(case_id, {
+                    "huawei_ims": {**meta["huawei_ims"], "analyzed": True}
+                })
+                logger.info(
+                    "Huawei IMS analysed (%s): %d transactions, %d call-IDs",
+                    source_label, len(hw["transactions"]),
+                    hw["summary"].get("unique_call_ids", 0),
+                )
+            except Exception as e:
+                logger.error(f"Huawei IMS analysis failed: {e}", exc_info=True)
+                analyses[case_id]["error"] = f"Huawei IMS parse error: {e}"
+
         # --- Step 2: Groundhog Analysis ---
         if run_groundhog and meta.get("groundhog"):
             step += 1
@@ -1158,6 +1252,18 @@ async def analyze_case_task(
                 transfer_context=pcap_results.get("transfer_context") if pcap_results else None,
                 handover_context=pcap_results.get("handover_context") if pcap_results else None,
                 vendor_context=pcap_results.get("vendor_context") if pcap_results else None,
+                pfcp_context=pcap_results.get("pfcp_context") if pcap_results else None,
+                diameter_app_context=pcap_results.get("diameter_app_context") if pcap_results else None,
+                subscriber_journey_context=pcap_results.get("subscriber_journey_context") if pcap_results else None,
+                ho_quality_context=pcap_results.get("ho_quality_context") if pcap_results else None,
+                slicing_context=pcap_results.get("slicing_context") if pcap_results else None,
+                sbi_context=pcap_results.get("sbi_context") if pcap_results else None,
+                trend_context=pcap_results.get("trend_context") if pcap_results else None,
+                huawei_ims_context=(
+                    __import__("app.imstrace.huawei_html", fromlist=["format_huawei_summary_for_llm"])
+                    .format_huawei_summary_for_llm(pcap_results.get("huawei_summary"))
+                    if pcap_results and pcap_results.get("huawei_summary") else None
+                ),
                 ran_context=pcap_results.get("ran_context") if pcap_results else None,
             )
             
@@ -1166,13 +1272,38 @@ async def analyze_case_task(
             final_dir.mkdir(parents=True, exist_ok=True)
             with open(final_dir / "rca.json", "w") as f:
                 json.dump(rca, f, indent=2, default=str)
-        
+
+        # For Huawei IMS cases, replace the LLM's (likely hallucinated)
+        # sequence diagram with one built from the actual observed messages.
+        if pcap_results and pcap_results.get("sequence_diagram_override") and isinstance(rca, dict):
+            rca["sequence_diagram"] = pcap_results["sequence_diagram_override"]
+
+        # Build the Voice/IMS panel payload the React dashboard expects.
+        # (The legacy /api/upload flow built this from local vars; the case
+        # flow lost it during refactoring, leaving the panel empty even when
+        # the underlying analysers found calls.)
+        voice_ctx = pcap_results.get("voice_context") if pcap_results else None
+        if voice_ctx is None and pcap_results and pcap_results.get("voice_calls"):
+            voice_ctx = {}
+        voice_analysis_payload = None
+        if pcap_results and (pcap_results.get("voice_calls") or pcap_results.get("registrations")):
+            voice_analysis_payload = {
+                "trace_type": (voice_ctx or {}).get("trace_type", "UNKNOWN"),
+                "calls": pcap_results.get("voice_calls", []),
+                "registrations": pcap_results.get("registrations", []),
+                "findings": pcap_results.get("media_findings", []),
+                "media_streams": pcap_results.get("media_streams", []),
+                "stats": (voice_ctx or {}).get("stats", {}),
+            }
+
         # --- Build combined results ---
         results = {
             "summary": pcap_results.get("summary", {}) if pcap_results else {},
             "flows": (pcap_results.get("flows", []) if pcap_results else []),
             "protocol_stats": pcap_results.get("protocol_stats", {}) if pcap_results else {},
             "technology_stats": pcap_results.get("technology_stats", {}) if pcap_results else {},
+            "message_sequence": (pcap_results.get("message_sequence", []) if pcap_results else []),
+            "voice_analysis": voice_analysis_payload,
             "root_cause_analysis": rca,
             "groundhog_summary": groundhog_results.get("summary") if groundhog_results else None,
             "groundhog_events_count": len(groundhog_results.get("events", [])) if groundhog_results else 0,

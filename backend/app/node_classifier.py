@@ -5,7 +5,9 @@ Implements hybrid node identification:
 1. Deterministic rules based on protocol signaling patterns
 2. LLM-assisted classification for unresolved nodes
 """
+import json
 import logging
+import re
 from typing import Dict, List, Any, Set, Tuple
 from collections import defaultdict
 
@@ -115,18 +117,20 @@ PFCP_NODE_RULES = {
     "6": ("src", "PFCP_UP"),
 }
 
-# SIP node identification
+# SIP node identification. Use functional node names (UE / P-CSCF / S-CSCF)
+# rather than per-dialog roles (Caller / Callee) so the network topology view
+# stays accurate even when an IP plays different roles across calls.
 SIP_NODE_RULES = {
     # Based on Via/Contact headers and message patterns
     "REGISTER_request": ("src", "UE"),
     "REGISTER_200": ("src", "S-CSCF"),
     "REGISTER_401": ("src", "S-CSCF"),
-    "INVITE_request": ("src", "Caller"),
+    "INVITE_request": ("src", "UE"),
     "100_Trying": ("src", "P-CSCF"),
-    "180_Ringing": ("src", "Callee"),
-    "183_Progress": ("src", "Callee"),
-    "200_INVITE": ("src", "Callee"),
-    "BYE_request": ("src", "Terminator"),
+    "180_Ringing": ("src", "UE"),
+    "183_Progress": ("src", "UE"),
+    "200_INVITE": ("src", "UE"),
+    "BYE_request": ("src", "UE"),
 }
 
 
@@ -257,46 +261,136 @@ class NodeClassifier:
                     elif gtp_type == "33":
                         src_ev.inferred_types.append(("SGW", f"GTPv2 CSResp sender"))
             
-            # SIP evidence
+            # SIP evidence. Both src AND dst get tagged where the method
+            # carries information about who's terminating the dialog.
             elif protocol == "SIP":
                 if "REGISTER" in message_type:
                     if "Response" not in message_type:
                         src_ev.inferred_types.append(("UE", "SIP REGISTER sender"))
+                        dst_ev.inferred_types.append(("P-CSCF", "SIP REGISTER receiver"))
                     else:
                         src_ev.inferred_types.append(("S-CSCF", "SIP REGISTER response"))
                 elif "INVITE" == message_type:
-                    src_ev.inferred_types.append(("Caller", "SIP INVITE sender"))
+                    src_ev.inferred_types.append(("UE", "SIP INVITE sender"))
+                    # The receiver could be UE (called) or P-CSCF (forwarding);
+                    # mark as UE as the default terminator — P-CSCF wins via
+                    # specificity if the IP also emits 100 Trying.
+                    dst_ev.inferred_types.append(("UE", "SIP INVITE receiver"))
                 elif "100" in message_type or "Trying" in message_type:
                     src_ev.inferred_types.append(("P-CSCF", "SIP 100 Trying"))
                 elif "180" in message_type or "Ring" in message_type:
-                    src_ev.inferred_types.append(("Callee", "SIP 180 Ringing"))
+                    src_ev.inferred_types.append(("UE", "SIP 180 Ringing"))
+                elif "183" in message_type:
+                    src_ev.inferred_types.append(("UE", "SIP 183 Session Progress"))
+                elif "200" in message_type and "Response" in message_type:
+                    src_ev.inferred_types.append(("UE", "SIP 200 (INVITE/BYE response)"))
+                elif "487" in message_type or "486" in message_type or "488" in message_type:
+                    src_ev.inferred_types.append(("UE", "SIP final non-2xx response"))
+                elif message_type in ("BYE", "ACK", "PRACK", "UPDATE", "CANCEL", "SUBSCRIBE"):
+                    src_ev.inferred_types.append(("UE", f"SIP {message_type} sender"))
+                    dst_ev.inferred_types.append(("UE", f"SIP {message_type} receiver"))
+                elif "NOTIFY" in message_type:
+                    src_ev.inferred_types.append(("AS", "SIP NOTIFY (application server)"))
         
         logger.info(f"Built evidence for {len(self.evidence_map)} IPs")
         return self.evidence_map
     
     def classify_deterministic(self) -> Dict[str, str]:
-        """
-        First pass: Use deterministic rules to classify nodes.
+        """First pass: feature-based classification, preferring more specific roles.
+
+        Majority vote conflates intermediaries with endpoints (e.g. a P-CSCF
+        that forwards INVITEs gets the same INVITE-sender evidence a UE does).
+        Instead we look at which *combination* of role-signatures the IP shows
+        and pick the most-specific consistent role.
         """
         results = {}
-        
         for ip, evidence in self.evidence_map.items():
             if not evidence.inferred_types:
                 continue
-            
-            # Count votes for each node type
-            type_votes: Dict[str, int] = defaultdict(int)
-            for node_type, reason in evidence.inferred_types:
-                type_votes[node_type] += 1
-            
-            # Pick the most common type
-            if type_votes:
-                best_type = max(type_votes, key=type_votes.get)
-                results[ip] = best_type
-                logger.debug(f"Deterministic: {ip} -> {best_type} (votes: {type_votes})")
-        
+            types = {t for t, _ in evidence.inferred_types}
+
+            # IMS function disambiguation: specificity > frequency
+            if "P-CSCF" in types:
+                # An IP that emits SIP 100 Trying is acting as a proxy edge,
+                # even if it also forwards INVITEs (UE-shaped evidence).
+                results[ip] = "P-CSCF"
+                continue
+            if "S-CSCF" in types:
+                # An IP that responds to REGISTER with 200/401 is the
+                # authoritative server, even if it also forwards INVITEs.
+                results[ip] = "S-CSCF"
+                continue
+            if "I-CSCF" in types:
+                results[ip] = "I-CSCF"
+                continue
+            # Core / transport plane: prefer specific functions over generic
+            for specific in ("MME", "SGW", "PGW", "AMF", "SMF", "UPF", "HSS",
+                             "PCRF", "PCF", "AUSF", "UDM", "TAS", "SBC"):
+                if specific in types:
+                    results[ip] = specific
+                    break
+            else:
+                # No specific function matched; fall back to majority vote.
+                votes: Dict[str, int] = defaultdict(int)
+                for t, _ in evidence.inferred_types:
+                    votes[t] += 1
+                results[ip] = max(votes, key=votes.get)
+                logger.debug(f"Deterministic: {ip} -> {results[ip]} (votes: {dict(votes)})")
         return results
     
+    def _parse_classification_payload(self, content: str, ips_to_query: List[str]) -> List[Dict[str, Any]]:
+        """Parse the LLM reply into a list of {ip, node_type} dicts.
+
+        Tries strict JSON first; on failure, repairs common LLM quirks
+        (trailing commas, unterminated strings, prose around the array),
+        and finally falls back to a regex scrape so we never lose every
+        classification just because one entry is malformed.
+        """
+        if not content:
+            return []
+        # 1. Strict JSON
+        try:
+            return self._coerce_classification_list(json.loads(content))
+        except Exception:
+            pass
+        # 2. Find the first JSON array in the response and try again
+        m = re.search(r"\[.*\]", content, re.DOTALL)
+        if m:
+            blob = m.group(0)
+            # Strip trailing commas: ",]" or ",}"
+            blob = re.sub(r",\s*([\]}])", r"\1", blob)
+            try:
+                return self._coerce_classification_list(json.loads(blob))
+            except Exception:
+                pass
+        # 3. Regex scrape: per-IP rescue. Use [^{}] in the gap so we don't
+        # accidentally pair an ip from one object with a node_type from another.
+        out: List[Dict[str, Any]] = []
+        ip_set = set(ips_to_query)
+        for ip in ip_set:
+            pat = re.compile(
+                r'(?:"ip"\s*:\s*"%s"[^{}]{0,200}?"node_type"\s*:\s*"([^"]+)"'
+                r'|"node_type"\s*:\s*"([^"]+)"[^{}]{0,200}?"ip"\s*:\s*"%s")'
+                % (re.escape(ip), re.escape(ip)),
+                re.DOTALL,
+            )
+            m2 = pat.search(content)
+            if m2:
+                node_type = (m2.group(1) or m2.group(2) or "").strip()
+                if node_type:
+                    out.append({"ip": ip, "node_type": node_type})
+        if out:
+            logger.info("LLM JSON repair scraped %d classifications from malformed reply", len(out))
+        return out
+
+    @staticmethod
+    def _coerce_classification_list(payload: Any) -> List[Dict[str, Any]]:
+        if isinstance(payload, dict):
+            payload = payload.get("classifications") or payload.get("results") or payload.get("nodes") or []
+        if not isinstance(payload, list):
+            return []
+        return [x for x in payload if isinstance(x, dict)]
+
     async def classify_with_llm(self, unresolved_ips: List[str]) -> Dict[str, str]:
         """
         Second pass: Use LLM to classify unresolved IPs.
@@ -348,29 +442,23 @@ Respond ONLY with JSON array:
 """
         
         try:
-            from .llm_service import get_llm_client
+            from .llm_service import chat_complete
             import json
-            
-            client = get_llm_client()
-            if not client:
-                logger.warning("LLM client not available for node classification")
-                return results
-            
-            response = client.chat.completions.create(
-                model="kimi-k2-0711-preview",
+
+            result = chat_complete(
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
                 max_tokens=500,
+                temperature=0.1,
             )
-            
-            content = response.choices[0].message.content.strip()
-            # Extract JSON from response
+
+            content = (result.content or "").strip()
+            # Strip markdown code fences if the model wrapped its reply
             if "```" in content:
                 content = content.split("```")[1]
                 if content.startswith("json"):
                     content = content[4:]
-            
-            classifications = json.loads(content)
+
+            classifications = self._parse_classification_payload(content, ips_to_query)
             for item in classifications:
                 ip = item.get("ip")
                 node_type = item.get("node_type")
@@ -378,7 +466,7 @@ Respond ONLY with JSON array:
                     results[ip] = node_type
                     self._cache[ip] = node_type  # Cache for reuse
                     logger.info(f"LLM classified: {ip} -> {node_type}")
-        
+
         except Exception as e:
             logger.warning(f"LLM node classification failed: {e}")
         

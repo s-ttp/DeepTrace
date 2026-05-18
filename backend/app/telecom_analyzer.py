@@ -521,6 +521,219 @@ def format_session_for_export(session: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _raw_role_for_ip(ip: str, node_map: Dict[str, str], protos_seen: Dict[str, set]) -> str:
+    """Lookup the raw role (without indexing) for an IP."""
+    name = node_map.get(ip)
+    if name:
+        return name
+    try:
+        from app.resolution_service import IPResolver
+        r = IPResolver()
+        if not r.loaded:
+            r.load_config()
+        resolved = r.resolve(ip)
+        # Reject the resolver's broad subnet labels (e.g. "IMS_Node_58") —
+        # they use the last-byte host suffix, which collides across functions.
+        if (resolved and resolved != "Unknown" and resolved != ip
+                and not resolved.startswith("IMS_Node")):
+            return resolved
+    except Exception:
+        pass
+    protos = protos_seen.get(ip, set())
+    if "NGAP" in protos: return "5G RAN/Core Node (NGAP)"
+    if "S1AP" in protos: return "4G RAN/Core Node (S1AP)"
+    if "PFCP" in protos: return "PFCP Entity"
+    if "Diameter" in protos: return "Diameter Peer"
+    if "SIP" in protos: return "SIP Node"
+    if any(p.startswith("GTP") for p in protos): return "GTP Node"
+    if "RTP" in protos: return "RTP Endpoint"
+    return "Network Node"
+
+
+def _build_ip_label_map(
+    transactions: List[Dict[str, Any]],
+    node_map: Dict[str, str],
+    protos_seen: Dict[str, set],
+) -> Dict[str, str]:
+    """Stable ``ip -> functional label`` mapping.
+
+    Sequentially indexes IPs that share the same role (UE-1, UE-2, P-CSCF-1
+    etc.) so the diagram preserves topology — multiple UEs don't collapse
+    into one box.
+    """
+    raw: Dict[str, str] = {}
+    ips_seen: List[str] = []
+    for t in transactions or []:
+        for ip in (str(t.get("_src") or t.get("src_ip") or ""),
+                   str(t.get("_dst") or t.get("dst_ip") or "")):
+            if ip and ip not in raw:
+                raw[ip] = _raw_role_for_ip(ip, node_map, protos_seen)
+                ips_seen.append(ip)
+
+    role_counts: Dict[str, int] = {}
+    for ip in ips_seen:
+        role_counts[raw[ip]] = role_counts.get(raw[ip], 0) + 1
+
+    role_index: Dict[str, int] = {}
+    final: Dict[str, str] = {}
+    for ip in ips_seen:
+        role = raw[ip]
+        if role_counts.get(role, 0) > 1:
+            role_index[role] = role_index.get(role, 0) + 1
+            final[ip] = f"{role}-{role_index[role]}"
+        else:
+            final[ip] = role
+    return final
+
+
+def _name_for_ip(ip: str, label_map: Dict[str, str], fallback: str = "Network Node") -> str:
+    return label_map.get(ip, fallback)
+
+
+def build_message_sequence_from_transactions(
+    transactions: List[Dict[str, Any]],
+    node_map: Dict[str, str] = None,
+    max_messages: int = 100,
+) -> List[Dict[str, Any]]:
+    """Build a FlowDiagram-shaped message list from TShark transactions.
+
+    TShark gives us per-message timestamps + protocol fields that Scapy can't
+    dissect (full SIP method/status, Diameter cmd codes, etc.), so this is the
+    correct data source for the dashboard's swim-lane and Mermaid views.
+
+    Returns at most ``max_messages`` items, ordered by timestamp. Failures
+    (SIP >=400 except 401/407 challenges, Diameter result >=3000, TCAP errors)
+    are prioritised so the diagram surfaces the problem.
+    """
+    node_map = node_map or {}
+    items = [t for t in (transactions or []) if t.get("timestamp")]
+    items.sort(key=lambda t: t["timestamp"])
+
+    # Collect per-IP protocol observations for the fallback labeller, then
+    # compute a stable per-IP functional label (with sequential indexing for
+    # multiple instances of the same role).
+    protos_seen: Dict[str, set] = {}
+    for t in items:
+        for k in ("_src", "_dst", "src_ip", "dst_ip"):
+            ip = t.get(k)
+            if ip:
+                protos_seen.setdefault(str(ip), set()).add(str(t.get("protocol") or ""))
+    label_map = _build_ip_label_map(items, node_map, protos_seen)
+
+    def _is_failure(t: Dict[str, Any]) -> bool:
+        proto = t.get("protocol") or ""
+        if proto == "SIP":
+            mt = str(t.get("message_type") or "")
+            try:
+                code = int(mt.split()[0]) if mt and mt[0].isdigit() else None
+            except (ValueError, IndexError):
+                code = None
+            if code and 400 <= code < 600 and code not in (401, 407):
+                return True
+        if proto == "Diameter":
+            try:
+                rc = int(t.get("cause") or 0)
+                if rc >= 3000:
+                    return True
+            except (TypeError, ValueError):
+                pass
+        if "ERROR" in (t.get("message_type") or "").upper():
+            return True
+        return False
+
+    # Prioritise failures + a small window of context around each
+    failure_idx = [i for i, t in enumerate(items) if _is_failure(t)]
+    if failure_idx and len(items) > max_messages:
+        keep: set = set()
+        for i in failure_idx:
+            for j in range(max(0, i - 4), min(len(items), i + 6)):
+                keep.add(j)
+        # Pad with the earliest few for orientation
+        for j in range(min(8, len(items))):
+            keep.add(j)
+        items = [items[j] for j in sorted(keep)[:max_messages]]
+    else:
+        items = items[:max_messages]
+
+    out: List[Dict[str, Any]] = []
+    for t in items:
+        src_ip = t.get("_src") or t.get("src_ip") or ""
+        dst_ip = t.get("_dst") or t.get("dst_ip") or ""
+        proto = t.get("protocol") or "Unknown"
+        message_type = t.get("message_type") or ""
+        method = ""
+        status = None
+        if proto == "SIP":
+            mt = str(message_type)
+            if mt and mt[0].isdigit():
+                # "200 OK", "401 Unauthorized", "100 Trying" → status
+                try:
+                    status = int(mt.split()[0])
+                    method = mt  # keep full label for display
+                except (ValueError, IndexError):
+                    method = mt
+            else:
+                method = mt
+            info = f"SIP {mt}"
+        elif proto == "Diameter":
+            cmd = message_type or "?"
+            info = f"Diameter {cmd}"
+        else:
+            info = f"{proto} {message_type}".strip()
+
+        out.append({
+            "timestamp": t["timestamp"],
+            "src_ip": str(src_ip),
+            "dst_ip": str(dst_ip),
+            "src_port": 0,
+            "dst_port": 0,
+            "protocol": proto,
+            "transport": "SCTP" if proto in ("SIP", "Diameter") else "",
+            "length": 0,
+            "info": info,
+            "src_name": _name_for_ip(str(src_ip), label_map),
+            "dst_name": _name_for_ip(str(dst_ip), label_map),
+            "sip_method": method if proto == "SIP" and not (method and method[0].isdigit()) else "",
+            "sip_status": status if status else "",
+            "diameter_cmd": message_type if proto == "Diameter" else "",
+        })
+    return out
+
+
+def _protocol_fallback_label(ip: str, packets: List[Dict[str, Any]]) -> str:
+    """Last-resort role name for an IP that neither the LLM classifier, the
+    resolver, nor the behavioural heuristics could name. Picks a generic
+    functional label based on the protocol mix it carries so the diagram
+    never has to show a raw IP.
+    """
+    protos = set()
+    for pkt in packets:
+        if pkt.get("src_ip") == ip or pkt.get("dst_ip") == ip:
+            p = (pkt.get("protocol") or "").upper()
+            if p:
+                protos.add(p)
+            if "sip" in pkt:
+                protos.add("SIP")
+            if "diameter" in pkt:
+                protos.add("DIAMETER")
+            if "gtp" in pkt:
+                protos.add("GTP")
+            if "pfcp" in pkt:
+                protos.add("PFCP")
+    if not protos:
+        return "Unknown Node"
+    if "NGAP" in protos: return "5G RAN/Core Node (NGAP)"
+    if "S1AP" in protos: return "4G RAN/Core Node (S1AP)"
+    if "PFCP" in protos: return "PFCP Entity"
+    if "DIAMETER" in protos: return "Diameter Peer"
+    if "SIP" in protos: return "SIP Node"
+    if any(p.startswith("GTP") for p in protos): return "GTP Node"
+    if "RTP" in protos: return "RTP Endpoint"
+    if "DNS" in protos: return "DNS Server"
+    if "RADIUS" in protos: return "RADIUS Peer"
+    return f"{sorted(protos)[0]} Node"
+
+
 def _build_dynamic_map(packets: List[Dict[str, Any]]) -> Dict[str, str]:
     """
     Build a dynamic IP-to-Role map based on observed signaling behavior.
@@ -619,14 +832,20 @@ def extract_message_sequence(packets: List[Dict[str, Any]], max_messages: int = 
         src_ip = pkt["src_ip"]
         dst_ip = pkt["dst_ip"]
         
-        # Resolution priority: 1) node_map (classifier) 2) resolver (config) 3) dynamic_map (heuristics) 4) raw IP
+        # Resolution priority: 1) node_map (LLM classifier) 2) resolver (config)
+        # 3) dynamic_map (behavioural heuristics) 4) protocol-based functional
+        # fallback. Raw IPs must never appear as src_name / dst_name.
         src_name = node_map.get(src_ip) or resolver.resolve(src_ip)
         if src_name == src_ip or src_name == "Unknown":
-            src_name = dynamic_map.get(src_ip, src_ip)
-        
+            src_name = dynamic_map.get(src_ip)
+        if not src_name or src_name == src_ip:
+            src_name = _protocol_fallback_label(src_ip, packets)
+
         dst_name = node_map.get(dst_ip) or resolver.resolve(dst_ip)
         if dst_name == dst_ip or dst_name == "Unknown":
-            dst_name = dynamic_map.get(dst_ip, dst_ip)
+            dst_name = dynamic_map.get(dst_ip)
+        if not dst_name or dst_name == dst_ip:
+            dst_name = _protocol_fallback_label(dst_ip, packets)
         
         # DEBUG LOGGING (First 5 packets)
         if len(messages) < 5:

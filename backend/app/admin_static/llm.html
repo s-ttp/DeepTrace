@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeepTrace · LLM Admin</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a2028;
+      --border: #2a3441;
+      --text: #e1e7ee;
+      --muted: #8a96a6;
+      --accent: #5aa8ff;
+      --ok: #4ade80;
+      --err: #f87171;
+      --warn: #facc15;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 32px 20px 80px; }
+    h1 { margin: 0 0 4px; font-size: 22px; font-weight: 600; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .kv { display: grid; grid-template-columns: 130px 1fr; row-gap: 8px; font-size: 14px; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; word-break: break-all; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge.ok  { background: rgba(74, 222, 128, 0.15); color: var(--ok); }
+    .badge.err { background: rgba(248, 113, 113, 0.15); color: var(--err); }
+    .badge.warn{ background: rgba(250, 204, 21, 0.15); color: var(--warn); }
+    .badge.muted { background: rgba(138, 150, 166, 0.15); color: var(--muted); }
+
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; margin-top: 14px; }
+    select, input[type="text"], input[type="password"] {
+      width: 100%;
+      background: #0b0f14;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    select:focus, input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .actions { display: flex; gap: 10px; margin-top: 20px; }
+    button {
+      background: var(--accent);
+      color: #061018;
+      border: 0;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .result {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+    .result.ok  { background: rgba(74, 222, 128, 0.08); border: 1px solid rgba(74, 222, 128, 0.3); color: var(--ok); }
+    .result.err { background: rgba(248, 113, 113, 0.08); border: 1px solid rgba(248, 113, 113, 0.3); color: var(--err); }
+    .result.info{ background: rgba(90, 168, 255, 0.08); border: 1px solid rgba(90, 168, 255, 0.3); color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>LLM Model Management</h1>
+  <div class="sub">DeepTrace · change the active LLM provider, model, and key.</div>
+
+  <div class="panel">
+    <h2>Current</h2>
+    <dl class="kv" id="current">
+      <dt>Status</dt><dd>Loading…</dd>
+    </dl>
+  </div>
+
+  <div class="panel">
+    <h2>Change</h2>
+    <label for="provider">Provider</label>
+    <select id="provider">
+      <option value="moonshot">Moonshot AI</option>
+      <option value="openai">OpenAI</option>
+      <option value="anthropic">Anthropic</option>
+      <option value="google">Google (Gemini)</option>
+    </select>
+
+    <label for="model">Model name</label>
+    <input id="model" type="text" autocomplete="off" placeholder="">
+    <div class="hint" id="model-hint"></div>
+
+    <label for="apikey">API key</label>
+    <input id="apikey" type="password" autocomplete="off" placeholder="Paste new key (never displayed back)">
+    <div class="hint">The key is stored on the server in a 600-perm JSON file and is never returned by the API.</div>
+
+    <label for="baseurl">Base URL <span style="color:var(--muted)">(optional)</span></label>
+    <input id="baseurl" type="text" autocomplete="off">
+    <div class="hint" id="baseurl-hint"></div>
+
+    <div class="actions">
+      <button id="btn-test" type="button">Test</button>
+      <button id="btn-save" class="secondary" type="button">Save</button>
+    </div>
+    <div id="result" class="result"></div>
+  </div>
+</div>
+
+<script>
+const DEFAULTS = {
+  moonshot:  { model: "kimi-k2.5",          base: "https://api.moonshot.ai/v1", hint: "examples: kimi-k2.5, kimi-k2-0711-preview" },
+  openai:    { model: "gpt-4o-mini",        base: "https://api.openai.com/v1",  hint: "examples: gpt-4o-mini, gpt-4o, o1-mini" },
+  anthropic: { model: "claude-sonnet-4-5",  base: "",                            hint: "examples: claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5" },
+  google:    { model: "gemini-2.0-flash",   base: "",                            hint: "examples: gemini-2.0-flash, gemini-1.5-pro" },
+};
+
+const $ = (id) => document.getElementById(id);
+const providerEl = $("provider");
+const modelEl    = $("model");
+const keyEl      = $("apikey");
+const baseEl     = $("baseurl");
+const modelHint  = $("model-hint");
+const baseHint   = $("baseurl-hint");
+const resultEl   = $("result");
+const btnTest    = $("btn-test");
+const btnSave    = $("btn-save");
+
+function applyDefaults() {
+  const p = providerEl.value;
+  const def = DEFAULTS[p] || {};
+  if (!modelEl.value) modelEl.value = def.model || "";
+  baseEl.value = def.base || "";
+  modelHint.textContent = def.hint || "";
+  baseHint.textContent = def.base
+    ? "Default: " + def.base + " (edit for self-hosted/proxy)."
+    : "Leave blank to use the SDK default.";
+}
+providerEl.addEventListener("change", () => { modelEl.value = ""; applyDefaults(); });
+applyDefaults();
+
+function showResult(kind, text) {
+  resultEl.className = "result " + kind;
+  resultEl.textContent = text;
+  resultEl.style.display = "block";
+}
+
+function setBusy(busy) {
+  btnTest.disabled = busy;
+  btnSave.disabled = busy;
+}
+
+async function api(path, opts = {}) {
+  const resp = await fetch(path, Object.assign({ credentials: "same-origin" }, opts));
+  if (resp.status === 401) {
+    showResult("err", "Unauthorized. Reload the page to re-enter admin credentials.");
+    throw new Error("unauthorized");
+  }
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    throw new Error(body.detail || ("HTTP " + resp.status));
+  }
+  return body;
+}
+
+function renderCurrent(cfg) {
+  const el = $("current");
+  if (!cfg.provider) {
+    el.innerHTML = '<dt>Status</dt><dd><span class="badge warn">No provider configured</span></dd>';
+    return;
+  }
+  const test = cfg.last_test;
+  const testBadge = test
+    ? (test.ok
+        ? `<span class="badge ok">working · ${test.latency_ms}ms</span>`
+        : `<span class="badge err">failed</span>`)
+    : `<span class="badge muted">not tested</span>`;
+  const testDetail = test
+    ? (test.ok
+        ? `<dt>Last reply</dt><dd>${escapeHtml(test.sample || "(empty)")}</dd>`
+        : `<dt>Last error</dt><dd>${escapeHtml(test.error || "(unknown)")}</dd>`)
+    : "";
+  el.innerHTML =
+    `<dt>Provider</dt><dd>${escapeHtml(cfg.provider)}</dd>` +
+    `<dt>Model</dt><dd>${escapeHtml(cfg.model || "(unset)")}</dd>` +
+    `<dt>Base URL</dt><dd>${escapeHtml(cfg.base_url || "(sdk default)")}</dd>` +
+    `<dt>API key</dt><dd>${cfg.key_set ? "set " + escapeHtml(cfg.key_hint) : '<span class="badge warn">not set</span>'}</dd>` +
+    `<dt>Updated</dt><dd>${escapeHtml(cfg.updated_at || "—")} <span class="badge muted">${escapeHtml(cfg.source)}</span></dd>` +
+    `<dt>Test status</dt><dd>${testBadge}</dd>` +
+    testDetail;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function formBody() {
+  return {
+    provider: providerEl.value,
+    model: modelEl.value.trim(),
+    api_key: keyEl.value,
+    base_url: baseEl.value.trim() || null,
+  };
+}
+
+btnTest.addEventListener("click", async () => {
+  const body = formBody();
+  setBusy(true);
+  showResult("info", "Testing " + body.provider + " / " + body.model + " …");
+  try {
+    let payload;
+    if (body.api_key) {
+      payload = body;
+    } else {
+      payload = {};
+      showResult("info", "Testing currently-saved config …");
+    }
+    const res = await api("/api/admin/llm/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      showResult("ok", `OK · ${res.provider}/${res.model} replied in ${res.latency_ms}ms\n\nSample: ${res.sample || "(empty)"}`);
+    } else {
+      showResult("err", `FAIL · ${res.provider}/${res.model}\n\n${res.error || "Unknown error"}`);
+    }
+    await refresh();
+  } catch (e) {
+    showResult("err", e.message);
+  } finally {
+    setBusy(false);
+  }
+});
+
+btnSave.addEventListener("click", async () => {
+  const body = formBody();
+  if (!body.provider || !body.model || !body.api_key) {
+    showResult("err", "Provider, model, and API key are required to save.");
+    return;
+  }
+  setBusy(true);
+  showResult("info", "Saving …");
+  try {
+    await api("/api/admin/llm/config", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    keyEl.value = "";
+    showResult("ok", "Saved. Future analyses will use the new model.");
+    await refresh();
+  } catch (e) {
+    showResult("err", e.message);
+  } finally {
+    setBusy(false);
+  }
+});
+
+async function refresh() {
+  try {
+    const cfg = await api("/api/admin/llm/config");
+    renderCurrent(cfg);
+  } catch (e) {
+    $("current").innerHTML = '<dt>Status</dt><dd><span class="badge err">' + escapeHtml(e.message) + '</span></dd>';
+  }
+}
+
+refresh();
+</script>
+</body>
+</html>

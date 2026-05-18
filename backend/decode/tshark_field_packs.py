@@ -24,6 +24,11 @@ FIELD_PACKS = {
         "pfcp.seid",           # Session Endpoint ID
         "pfcp.cause",          # Cause Code
         "pfcp.seqno",          # Sequence Number (verified)
+        "pfcp.f_seid",         # F-SEID (peer SEID for session pairing)
+        "pfcp.node_id_str",    # Node ID for path/heartbeat tracking
+        "pfcp.qer_id",         # QoS Enforcement Rule ID
+        "pfcp.qfi",            # QoS Flow Identifier (5G)
+        "pfcp.snssai",         # Slice/Service Type (5G)
     ],
     
     # 5G Control Plane
@@ -146,12 +151,15 @@ FIELD_PACKS = {
     
     # HTTP/2 (5G SBI)
     "HTTP2": [
-        "http2.streamid",       # Stream ID
-        "http2.type",           # Frame Type
-        "http2.flags",          # Frame Flags
-        "http2.header.name",    # Header Name
-        "http2.header.value",   # Header Value
-        "http2.status",         # HTTP/2 Status Code
+        "http2.streamid",        # Stream ID
+        "http2.type",            # Frame Type
+        "http2.flags",           # Frame Flags
+        "http2.header.name",     # Header Name
+        "http2.header.value",    # Header Value
+        "http2.status",          # HTTP/2 Status Code
+        "http2.headers.path",    # :path pseudo-header (SBI service URI)
+        "http2.headers.method",  # :method pseudo-header
+        "http2.data.data",       # Body bytes (JSON ProblemDetails for 5G SBI errors)
     ],
     
     # M3UA/MTP3 (SS7 over IP)

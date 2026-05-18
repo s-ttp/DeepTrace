@@ -1,54 +1,106 @@
-"""Kimi K2 LLM integration for PCAP analysis enrichment"""
+"""LLM integration for PCAP analysis enrichment.
+
+Provider/model/API-key are sourced from `llm_config` (which reads
+backend/config/llm_config.json, falling back to environment variables).
+The admin page at /admin/llm writes that config and invalidates the
+adapter cached here.
+"""
 import os
 import json
 import hashlib
 import logging
-from typing import List, Dict, Any
-import httpx
-from openai import OpenAI
+import threading
+from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 
-# Load environment variables
+from .llm_providers import build_adapter, LLMAdapter, AdapterError, CompletionResult
+from . import llm_config
+
+# Load environment variables (still needed for non-LLM settings)
 load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Initialize OpenAI client
-client = None
+# Adapter cache keyed by (provider, model, base_url, key-fingerprint).
+# Replaces the previous module-global OpenAI client.
+_adapter_lock = threading.Lock()
+_adapter_cache: Dict[str, LLMAdapter] = {}
+
+
+def _cache_key(cfg: Dict[str, Any]) -> str:
+    parts = "|".join([
+        cfg.get("provider") or "",
+        cfg.get("model") or "",
+        cfg.get("base_url") or "",
+        hashlib.sha256((cfg.get("api_key") or "").encode()).hexdigest()[:12],
+    ])
+    return parts
+
+
+def get_adapter() -> LLMAdapter:
+    """Return a cached LLMAdapter built from the active config."""
+    cfg = llm_config.get_active_config()
+    if not cfg.get("provider") or not cfg.get("api_key"):
+        raise ValueError(
+            "No LLM provider configured. Set one via /admin/llm or via "
+            "MOONSHOT_API_KEY / OPENAI_API_KEY in .env."
+        )
+    key = _cache_key(cfg)
+    with _adapter_lock:
+        adapter = _adapter_cache.get(key)
+        if adapter is None:
+            adapter = build_adapter(
+                provider=cfg["provider"],
+                api_key=cfg["api_key"],
+                base_url=cfg.get("base_url") or None,
+            )
+            _adapter_cache.clear()
+            _adapter_cache[key] = adapter
+            logger.info("Built LLM adapter: provider=%s model=%s", cfg["provider"], cfg.get("model"))
+        return adapter
+
+
+def invalidate_client_cache() -> None:
+    """Drop the cached adapter. Called by llm_config when settings change."""
+    with _adapter_lock:
+        _adapter_cache.clear()
+
 
 def get_llm_client():
-    """Get or create LLM client"""
-    global client
-    if client is None:
-        # Check for Moonshot/Kimi Key first (primary provider)
-        moonshot_key = os.getenv("MOONSHOT_API_KEY")
-        if moonshot_key:
-            http_client = httpx.Client()
-            base_url = os.getenv("KIMI_API_BASE_URL", "https://api.moonshot.ai/v1")
-            client = OpenAI(
-                api_key=moonshot_key, 
-                base_url=base_url,
-                http_client=http_client
-            )
-            logger.info(f"Initialized Moonshot client (Base: {base_url})")
-        
-        else:
-            # Fallback to OpenAI
-            openai_key = os.getenv("OPENAI_API_KEY")
-            if not openai_key:
-                 logger.error("No MOONSHOT_API_KEY or OPENAI_API_KEY found")
-                 raise ValueError("API Key not set")
-            
-            http_client = httpx.Client()
-            base_url = os.getenv("OPENAI_BASE_URL")  # None by default
-            client = OpenAI(
-                api_key=openai_key,
-                base_url=base_url,
-                http_client=http_client
-            )
-            logger.info(f"Initialized OpenAI client")
-    
-    return client
+    """Backward-compatible accessor.
+
+    For OpenAI-compatible providers (openai/moonshot) returns the underlying
+    OpenAI SDK client so legacy callers can still use
+    `client.chat.completions.create(...)`. For other providers raises so the
+    caller is forced to use `chat_complete()`.
+    """
+    adapter = get_adapter()
+    sdk_client = getattr(adapter, "client", None)
+    if sdk_client is None:
+        raise ValueError(
+            f"Active provider {adapter.provider!r} does not expose a chat.completions client; "
+            "use llm_service.chat_complete() instead."
+        )
+    return sdk_client
+
+
+def chat_complete(
+    messages: List[Dict[str, str]],
+    max_tokens: int = 512,
+    temperature: float = 1.0,
+    model: Optional[str] = None,
+) -> CompletionResult:
+    """Provider-agnostic chat completion. Uses the active model unless overridden."""
+    adapter = get_adapter()
+    use_model = model or llm_config.get_active_model()
+    if not use_model:
+        raise ValueError("No LLM model configured.")
+    return adapter.complete(
+        messages=messages,
+        model=use_model,
+        max_tokens=max_tokens,
+        temperature=temperature,
+    )
 
 # Simple in-memory cache
 llm_cache: Dict[str, str] = {}
@@ -72,9 +124,9 @@ async def enrich_with_llm(flows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     logger.info(f"Enriching {len(flows)} flows with LLM insights")
     
     enriched = []
-    # Use configured model (Kimi K2 Turbo as default)
-    model = os.getenv("KIMI_MODEL", "kimi-k2.5")
-    
+    # Active model is configured via /admin/llm; falls back to env on first boot.
+    model = llm_config.get_active_model()
+
     # Only analyze top 3 flows to speed up initial load (was 10)
     flows_to_analyze = flows[:3]
     
@@ -108,22 +160,18 @@ Provide a brief analysis (2-3 sentences) covering:
                 logger.debug(f"Cache hit for flow {i}")
                 flow_copy["llm_insight"] = llm_cache[cache_key]
             else:
-                llm_client = get_llm_client()
-                
-                # Use chat.completions API (compatible with all models)
-                completion = llm_client.chat.completions.create(
-                    model=model,
+                result = chat_complete(
                     messages=[
                         {
-                            "role": "system", 
+                            "role": "system",
                             "content": "You are a telecom network expert specializing in mobile network protocols across all generations (2G/GSM, 3G/UMTS, 4G/LTE, 5G/NR). You understand protocols like GTP-U/C, PFCP, Diameter, S1-AP, NGAP, SIP, RTP, M3UA, SS7, and RADIUS. Analyze network flows concisely and provide actionable insights about mobile network traffic."
                         },
                         {"role": "user", "content": prompt}
                     ],
-                    temperature=1,
-                    max_completion_tokens=150
+                    max_tokens=150,
+                    temperature=1.0,
                 )
-                insight = completion.choices[0].message.content
+                insight = result.content
                 flow_copy["llm_insight"] = insight
                 llm_cache[cache_key] = insight
                 logger.debug(f"LLM insight generated for flow {i}")
@@ -336,6 +384,15 @@ def _format_groundhog_section(summary: dict = None) -> str:
     if kpis:
         for k, v in kpis.items():
             lines.append(f"- {k}: min={v.get('min')}, avg={v.get('avg')}, max={v.get('max')} {v.get('unit', '')}")
+    dist = summary.get('radio_kpi_distributions', {})
+    if dist:
+        lines.append("- **AMC / link-adaptation distributions**:")
+        for kind, bands in dist.items():
+            if kind == "harq":
+                lines.append(f"  - HARQ: ack={bands.get('ack')}, nack={bands.get('nack')}, nack_ratio={bands.get('nack_ratio_pct')}%")
+            else:
+                parts = ", ".join(f"{b}={info.get('pct')}%" for b, info in bands.items())
+                lines.append(f"  - {kind}: {parts}")
     ri = summary.get('radio_issues_detected', {})
     if ri:
         lines.append(f"- **Radio Issues**: {json.dumps(ri)}")
@@ -399,6 +456,15 @@ async def root_cause_analysis(
     handover_context: str = None,
     vendor_context: str = None,  # NEW: Vendor-specific code mappings
     ran_context: str = None,  # NEW: Multi-generation RAN analysis context
+    # Phase 2: deeper analysis contexts
+    pfcp_context: str = None,
+    diameter_app_context: str = None,
+    subscriber_journey_context: str = None,
+    ho_quality_context: str = None,
+    slicing_context: str = None,
+    sbi_context: str = None,
+    trend_context: str = None,
+    huawei_ims_context: str = None,
     # Groundhog / Correlation / Radio RCA context
     groundhog_summary: dict = None,
     correlation_report: dict = None,
@@ -416,8 +482,8 @@ async def root_cause_analysis(
     - health_score: Overall network health (0-100)
     """
     logger.info("Performing enhanced root cause analysis")
-    
-    model = os.getenv("KIMI_MODEL", "kimi-k2.5")
+
+    model = llm_config.get_active_model()
     
     # Build summary if not provided
     if summary is None:
@@ -552,6 +618,22 @@ async def root_cause_analysis(
 
 {ran_context if ran_context else "## RAN ANALYSIS: No RAN signaling (S1AP/NGAP/RANAP/BSSAP) observable from this capture point."}
 
+{pfcp_context if pfcp_context else "## PFCP / N4 ANALYSIS: No PFCP traffic observed at this capture point."}
+
+{diameter_app_context if diameter_app_context else "## DIAMETER APPLICATION-LEVEL OUTCOMES: No Diameter activity observable."}
+
+{subscriber_journey_context if subscriber_journey_context else "## SUBSCRIBER JOURNEYS: No per-subscriber session timelines reconstructed."}
+
+{ho_quality_context if ho_quality_context else "## HANDOVER QUALITY: No handover events available for quality scoring."}
+
+{slicing_context if slicing_context else "## NETWORK SLICING / QOS FLOWS: No 5G slice (S-NSSAI) or QFI activity observed."}
+
+{sbi_context if sbi_context else "## 5G SBI ERROR ANALYSIS: No HTTP/2 SBI errors decoded."}
+
+{trend_context if trend_context else "## TREND / PATTERN DETECTION: No recurring patterns detected."}
+
+{huawei_ims_context if huawei_ims_context else "## HUAWEI IMS TRACE: No Huawei IMS trace uploaded."}
+
 ## OBSERVED DATASETS
 - PCAP: {"Present" if summary and summary.get('total_flows') else "Not uploaded"}
 - Groundhog Radio Trace: {"Present" if groundhog_summary else "Not uploaded"}
@@ -674,8 +756,6 @@ Provide a STRUCTURED analysis with the following JSON format (respond ONLY with 
 CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are not explicitly present in the evidence above. If deterministic Groundhog Radio RCA findings (like RRC Latency or SgNB failure) or concrete PCAP error codes are provided, you MUST use them to write a confident, conclusive executive_narrative instead of treating the analysis as circumstantial or INCONCLUSIVE. If insufficient evidence exists altogether, use classification "INCONCLUSIVE" and populate "inconclusive_aspects"."""
 
     try:
-        llm_client = get_llm_client()
-        
         # Determine adaptive reasoning effort for logging
         reasoning_effort = determine_reasoning_effort(
             failure_summary=failure_summary,
@@ -684,38 +764,22 @@ CRITICAL: Do NOT mention protocols, response codes, or failure reasons that are 
             expert_findings=expert_findings
         )
         logger.info(f"Adaptive reasoning effort: {reasoning_effort}")
-        
-        # Use chat.completions API (compatible with all models)
-        completion_args = {
-            "model": model,
-            "messages": [
+
+        result = chat_complete(
+            messages=[
                 {
-                    "role": "system", 
+                    "role": "system",
                     "content": "You are an expert telecom network analyst AI specializing in 3GPP mobile networks. You MUST respond with valid JSON only. Your expertise covers: Mobile network protocols (GTP-U/C, PFCP, Diameter, S1-AP, NGAP), Voice protocols (SIP, RTP, VoLTE/VoNR), Legacy (SS7, M3UA), and Supporting protocols (DNS, RADIUS, DHCP, HTTP/2 for 5G-SBI). IMPORTANT: Provide CONCISE but insightful analysis. Avoid excessive verbosity to prevent response truncation. For each root cause, include: 1) Technical description with protocol-level details, 2) Specific evidence references, 3) Confidence justification, 4) Impact assessment. Reference 3GPP specifications where applicable."
                 },
                 {"role": "user", "content": prompt}
             ],
-            "temperature": 1
-        }
-        
-        # Use max_completion_tokens - increased for detailed analysis
-        completion_args["max_completion_tokens"] = 8000
+            max_tokens=8000,
+            temperature=1.0,
+            model=model,
+        )
 
-        completion = llm_client.chat.completions.create(**completion_args)
-        
-        # Extract response with null check
-        raw_content = completion.choices[0].message.content
-        logger.info(f"LLM response type: {type(raw_content)}, length: {len(raw_content) if raw_content else 0}")
-        
-        if raw_content is None:
-            logger.warning("LLM returned None content, model may require reasoning=True or different parameters")
-            # Check for reasoning content (for o-series models)
-            if hasattr(completion.choices[0].message, 'reasoning_content') and completion.choices[0].message.reasoning_content:
-                raw_content = completion.choices[0].message.reasoning_content
-                logger.info(f"Using reasoning_content instead, length: {len(raw_content)}")
-            else:
-                raw_content = ""
-        
+        raw_content = result.content
+        logger.info(f"LLM response length: {len(raw_content) if raw_content else 0}")
         response_text = raw_content.strip() if raw_content else ""
         
         # Repair JSON if needed (simple quote/brace closer)

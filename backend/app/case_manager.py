@@ -10,6 +10,7 @@ Each case has a unique case_id and a directory structure:
     final/
 """
 import os
+import shutil
 import uuid
 import json
 import time
@@ -20,6 +21,60 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 ARTIFACTS_DIR = Path(__file__).parent.parent / "artifacts"
+UPLOADS_DIR = Path(__file__).parent.parent / "uploads"
+
+
+def wipe_all_cases() -> Dict[str, int]:
+    """Delete every case dir under artifacts/ and every file in uploads/.
+
+    Real-time troubleshooting design: at any moment the disk should hold at most
+    the *current* case. Called from the FastAPI lifespan on startup (which
+    also fires on the daily 23:00 cron restart) and from the case-create
+    endpoint (so the previous case is wiped the moment a new one begins).
+    """
+    removed_cases = 0
+    removed_uploads = 0
+    if ARTIFACTS_DIR.exists():
+        for entry in ARTIFACTS_DIR.iterdir():
+            if entry.is_dir() and entry.name != ".cache" and not entry.name.startswith("."):
+                try:
+                    shutil.rmtree(entry)
+                    removed_cases += 1
+                except Exception as e:
+                    logger.warning("Could not remove %s: %s", entry, e)
+    if UPLOADS_DIR.exists():
+        for entry in UPLOADS_DIR.iterdir():
+            if entry.is_file() and entry.name != ".gitkeep" and not entry.name.startswith("."):
+                try:
+                    entry.unlink()
+                    removed_uploads += 1
+                except Exception as e:
+                    logger.warning("Could not remove %s: %s", entry, e)
+    if removed_cases or removed_uploads:
+        logger.info("Wiped %d case dir(s) and %d upload file(s) from disk", removed_cases, removed_uploads)
+    return {"cases_removed": removed_cases, "uploads_removed": removed_uploads}
+
+
+def wipe_case(case_id: str) -> bool:
+    """Remove a single case's artifacts directory + any matching upload files."""
+    case_dir = ARTIFACTS_DIR / case_id
+    removed = False
+    if case_dir.exists() and case_dir.is_dir():
+        try:
+            shutil.rmtree(case_dir)
+            removed = True
+        except Exception as e:
+            logger.warning("Could not remove %s: %s", case_dir, e)
+    if UPLOADS_DIR.exists():
+        for entry in UPLOADS_DIR.iterdir():
+            if entry.is_file() and entry.name.startswith(case_id):
+                try:
+                    entry.unlink()
+                except Exception as e:
+                    logger.warning("Could not remove %s: %s", entry, e)
+    if removed:
+        logger.info("Wiped case %s from disk", case_id)
+    return removed
 
 
 def create_case() -> Dict[str, Any]:
@@ -87,6 +142,25 @@ def register_groundhog(case_id: str, filename: str, file_path: str, fmt: str) ->
     """Register a Groundhog radio trace upload for the case."""
     return update_case_meta(case_id, {
         "groundhog": {
+            "filename": filename,
+            "file_path": file_path,
+            "format": fmt,
+            "uploaded_at": time.time(),
+            "analyzed": False,
+        }
+    })
+
+
+def register_huawei_ims(case_id: str, filename: str, file_path: str,
+                         fmt: str = "huawei_html_zip") -> Dict[str, Any]:
+    """Register a Huawei IMS trace upload.
+
+    ``fmt`` is one of:
+      - ``huawei_html_zip`` — Service Trace .zip (sequence-diagram bundle)
+      - ``ptmf`` — NE-side binary Performance Trace
+    """
+    return update_case_meta(case_id, {
+        "huawei_ims": {
             "filename": filename,
             "file_path": file_path,
             "format": fmt,

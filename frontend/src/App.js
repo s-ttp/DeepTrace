@@ -212,6 +212,17 @@ function App() {
               {apiStatus === 'ready' ? 'API Ready' : apiStatus === 'checking' ? 'Checking...' : 'API Error'}
             </div>
             <div className="status-pill success">AI Powered</div>
+            <a
+              className="primary-ghost"
+              href={caseId ? `/report/${caseId}` : '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={caseId ? 'Open printable report (Save as PDF from the browser)' : 'Load a case first'}
+              style={caseId ? {} : { opacity: 0.4, pointerEvents: 'none' }}
+              onClick={(e) => { if (!caseId) e.preventDefault(); }}
+            >
+              📄 Report
+            </a>
             {(jobId || analysisData || fileKind) && (
               <button className="primary-ghost" onClick={handleNewAnalysis}>
                 🔄 New Analysis
@@ -259,6 +270,11 @@ function App() {
                   <h3>Start with Radio Trace</h3>
                   <p>Upload radio trace (HTML, CSV, XLS, XLSX, JSON, XML)</p>
                 </div>
+                <div className="upload-card" onClick={() => handleStartWithFileKind('huawei_ims')}>
+                  <div className="upload-card-icon">🧬</div>
+                  <h3>Start with Huawei IMS Trace</h3>
+                  <p>Upload an IMS Service Trace .zip OR an NE .ptmf binary trace</p>
+                </div>
               </div>
             </div>
           </section>
@@ -268,13 +284,19 @@ function App() {
           <section className="hero">
             <div className="hero-text">
               <p className="eyebrow">
-                {fileKind === 'pcap' ? '📡 PCAP Upload' : '📻 Radio Trace Upload'}
+                {fileKind === 'pcap' ? '📡 PCAP Upload'
+                  : fileKind === 'huawei_ims' ? '🧬 Huawei IMS Trace Upload'
+                  : '📻 Radio Trace Upload'}
               </p>
-              <h2>{fileKind === 'pcap' ? 'Upload Network Capture' : 'Upload Radio Trace'}</h2>
+              <h2>{fileKind === 'pcap' ? 'Upload Network Capture'
+                  : fileKind === 'huawei_ims' ? 'Upload Huawei IMS Trace Bundle'
+                  : 'Upload Radio Trace'}</h2>
               <p className="lead">
                 {fileKind === 'pcap'
                   ? 'Drag and drop your PCAP capture file for analysis.'
-                  : 'Drag and drop your radio trace file.'}
+                  : fileKind === 'huawei_ims'
+                    ? 'Drop the .zip exported from the Huawei IMS tracing tool. Subscriber IDs are anonymised before storage.'
+                    : 'Drag and drop your radio trace file.'}
               </p>
             </div>
             <div className="hero-upload">
