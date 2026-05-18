@@ -305,5 +305,6 @@ DeepTrace/
 
 ## 📄 License & contact
 
-Internal tooling. Open an issue on the GitHub repo for bugs or feature
-requests.
+Released under the [MIT License](LICENSE).
+
+Open an issue on the GitHub repo for bugs or feature requests.
