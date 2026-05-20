@@ -30,11 +30,11 @@ def build_trace_context(analysis_results: Dict[str, Any]) -> Dict[str, Any]:
             "message": "Analysis results not available"
         }
     
-    # Extract summary
-    summary = results.get("summary", {})
-    
-    # Extract RCA
-    rca = results.get("root_cause_analysis", {})
+    # Extract summary (coerce None -> {}; the key may be present but null)
+    summary = results.get("summary") or {}
+
+    # Extract RCA (coerce None -> {})
+    rca = results.get("root_cause_analysis") or {}
     
     # Extract flows (top 20 only)
     flows = results.get("flows", [])[:20]
@@ -52,10 +52,10 @@ def build_trace_context(analysis_results: Dict[str, Any]) -> Dict[str, Any]:
             "is_diameter": flow.get("is_diameter", False),
         })
     
-    # Extract voice analysis
-    voice = results.get("voice_analysis", {})
-    voice_stats = voice.get("stats", {})
-    voice_findings = voice.get("findings", [])[:10]
+    # Extract voice analysis (None when the trace has no calls/registrations)
+    voice = results.get("voice_analysis") or {}
+    voice_stats = voice.get("stats") or {}
+    voice_findings = (voice.get("findings") or [])[:10]
     
     # Build context
     context = {
