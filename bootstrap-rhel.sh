@@ -123,7 +123,7 @@ SYSTEM_PKGS=(
     libffi-devel openssl-devel
     wireshark-cli libcap
     nginx
-    curl ca-certificates tar
+    git curl ca-certificates tar
     policycoreutils-python-utils
     cronie
 )
