@@ -1303,6 +1303,7 @@ async def analyze_case_task(
             "protocol_stats": pcap_results.get("protocol_stats", {}) if pcap_results else {},
             "technology_stats": pcap_results.get("technology_stats", {}) if pcap_results else {},
             "message_sequence": (pcap_results.get("message_sequence", []) if pcap_results else []),
+            "telecom_sessions": (pcap_results.get("sessions", []) if pcap_results else []),
             "voice_analysis": voice_analysis_payload,
             "root_cause_analysis": rca,
             "groundhog_summary": groundhog_results.get("summary") if groundhog_results else None,
