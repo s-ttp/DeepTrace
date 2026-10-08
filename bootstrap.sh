@@ -43,7 +43,19 @@ fi
 . /etc/os-release
 case "${ID:-}" in
     debian|ubuntu) ;;
-    *) die "Unsupported distro '${ID:-?}'. This script targets Debian/Ubuntu." ;;
+    rhel|centos|rocky|almalinux|fedora|ol)
+        c_yellow "Detected Red Hat family OS ($PRETTY_NAME)."
+        c_cyan "Delegating to bootstrap-rhel.sh..."
+        exec "$SCRIPT_DIR/bootstrap-rhel.sh" "$@"
+        ;;
+    *)
+        if [[ "${ID_LIKE:-}" =~ (rhel|centos|fedora) ]]; then
+            c_yellow "Detected Red Hat family OS ($PRETTY_NAME)."
+            c_cyan "Delegating to bootstrap-rhel.sh..."
+            exec "$SCRIPT_DIR/bootstrap-rhel.sh" "$@"
+        fi
+        die "Unsupported distro '${ID:-?}'. This script targets Debian/Ubuntu (run ./bootstrap-rhel.sh on RHEL/CentOS/Rocky/AlmaLinux/Fedora)."
+        ;;
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -198,7 +198,31 @@ When it finishes it prints the dashboard URL and the next-step list.
 **Sign into `http://<host>/admin/llm` and configure your LLM provider before
 running the first analysis.**
 
-### Manual installation (non-Debian or development)
+### One-shot bootstrap (Red Hat / CentOS / Rocky / AlmaLinux / Fedora)
+
+```bash
+git clone https://github.com/s-ttp/DeepTrace.git
+cd DeepTrace
+./bootstrap-rhel.sh
+```
+*(Running `./bootstrap.sh` also automatically detects Red Hat and delegates to `bootstrap-rhel.sh`).*
+
+What `bootstrap-rhel.sh` does (idempotent, safe to re-run):
+1. Configures package repositories (EPEL, CRB/PowerTools) and installs development tools (`gcc`, `libxml2-devel`, `libpcap-devel`, etc.)
+2. Ensures Python 3.9+ runtime & devel tools, and installs `wireshark-cli` (providing `tshark` and `dumpcap`)
+3. Installs Node.js 18+ (NodeSource 20 LTS if needed) & npm
+4. Grants dumpcap packet-capture capabilities (`cap_net_raw`, `cap_net_admin`)
+5. Creates `backend/venv` and installs Python dependencies
+6. Builds the production React frontend bundle
+7. Prompts for admin credentials and writes `backend/.env` with bcrypt hash
+8. Installs and enables the `deeptrace.service` systemd unit
+9. Installs native Nginx site at `/etc/nginx/conf.d/deeptrace.conf` with self-contained proxy configuration
+10. Automatically configures SELinux booleans (`httpd_can_network_connect`) and file contexts (`httpd_sys_content_t`)
+11. Opens HTTP port 80 in `firewalld`
+12. Configures `crond` for the nightly 23:00 wipe
+13. Starts all services and smoke-tests endpoints
+
+### Manual installation (development)
 
 Prerequisites: Python 3.11+, Node.js 18+, `tshark`.
 
