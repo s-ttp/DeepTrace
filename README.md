@@ -174,7 +174,39 @@ and **🔄 New Analysis** (auto-wipes the current case).
 
 ## 🛠️ Setup & installation
 
-### One-shot bootstrap (Debian / Ubuntu, recommended)
+DeepTrace provides automated one-shot bootstrap scripts for both major Linux distribution families.
+
+> [!NOTE]
+> Run the bootstrap as a normal user with `sudo` privileges (not directly as `root`), because services and file ownership are bound to your user account.
+
+### 🐧 Red Hat / CentOS / Rocky Linux / AlmaLinux / Fedora
+
+```bash
+git clone https://github.com/s-ttp/DeepTrace.git
+cd DeepTrace
+./bootstrap-rhel.sh
+```
+*(You can also run `./bootstrap.sh`; it automatically detects Red Hat family distributions and delegates to `bootstrap-rhel.sh`).*
+
+**What `bootstrap-rhel.sh` automates (100% hands-free):**
+1. **Repositories**: Enables EPEL and CRB / PowerTools repos automatically.
+2. **System Dependencies**: Installs `gcc`, `gcc-c++`, `make`, `git`, `libpcap-devel`, `libxml2-devel`, `libxslt-devel`, `libffi-devel`, `openssl-devel`, `cronie`, `policycoreutils-python-utils`.
+3. **Packet Capture**: Installs `wireshark-cli` (provides `tshark` and `dumpcap`), grants non-root packet-capture capabilities (`cap_net_raw,cap_net_admin+eip`), and adds the user to the `wireshark` group.
+4. **Python**: Detects or installs Python 3.9+ / 3.11 with development headers and `pip`.
+5. **Node.js**: Automatically installs Node.js 20 LTS via official NodeSource RPM setup if local Node is missing or `< 18`.
+6. **Backend Virtualenv**: Creates `backend/venv` and installs all dependencies (`fastapi`, `uvicorn`, `scapy`, `pandas`, `lxml`, `bcrypt`, etc.).
+7. **Frontend Build**: Compiles the production React single-page bundle with memory limit safety (`768MB`).
+8. **Admin Credentials**: Prompts for your web console password and writes the bcrypt hash to `backend/.env` (mode `0600`). Can be run unattended by setting `DEEPTRACE_ADMIN_PASS="your_password"`.
+9. **Systemd Service**: Installs and enables `deeptrace.service` to start on boot.
+10. **Nginx Reverse Proxy**: Deploys native Red Hat configuration (`/etc/nginx/conf.d/deeptrace.conf`) with self-contained API & WebSocket proxy routing.
+11. **SELinux**: Applies `httpd_can_network_connect 1`, sets `httpd_sys_content_t` context on frontend files, and adjusts folder traversal permissions.
+12. **Firewall**: Automatically opens HTTP port 80 in `firewalld`.
+13. **Privacy Hygiene**: Schedules the nightly 23:00 wipe in `crond`.
+14. **Live Verification**: Boots the stack and executes smoke tests against `/api/health`.
+
+---
+
+### 🐧 Debian / Ubuntu
 
 ```bash
 git clone https://github.com/s-ttp/DeepTrace.git
@@ -182,49 +214,22 @@ cd DeepTrace
 ./bootstrap.sh
 ```
 
-What `bootstrap.sh` does (idempotent, safe to re-run after a `git pull`):
+**What `bootstrap.sh` automates:**
+1. Installs system packages via `apt-get`: `python3`, `python3-venv`, `python3-pip`, `build-essential`, `nodejs`, `npm`, `tshark`, `nginx`.
+2. Grants `cap_net_raw` on `dumpcap`.
+3. Creates `backend/venv` and installs Python dependencies.
+4. Compiles React frontend bundle.
+5. Prompts for admin credentials and writes `backend/.env` (mode `0600`).
+6. Installs and enables `deeptrace.service`.
+7. Installs `/etc/nginx/sites-available/deeptrace` and enables the site.
+8. Installs the daily 23:00 restart cron in `/etc/cron.d/deeptrace-restart`.
+9. Starts the stack and smoke-tests endpoints.
 
-1. `apt-get install` — `python3`, `python3-venv`, `python3-pip`, `build-essential`, `nodejs`, `npm`, `tshark`, `nginx`
-2. Grants `cap_net_raw` on `dumpcap` so TShark can capture without root
-3. Creates `backend/venv` + `pip install -r backend/requirements.txt`
-4. `npm install` + `npm run build` (capped Node heap so it survives on small VMs)
-5. Prompts for an admin username + password (no echo, confirmed), bcrypt-hashes it, writes `backend/.env` with mode 600
-6. Installs `/etc/systemd/system/deeptrace.service`, bound to the invoking user, uvicorn listening on `127.0.0.1:8000`
-7. Installs `/etc/nginx/sites-available/deeptrace` (port 80 → uvicorn :8000, with `/admin/`, `/report/`, `/api/`, `/ws/` route blocks)
-8. Installs `/etc/cron.d/deeptrace-restart` for the nightly 23:00 wipe
-9. Starts the service and smoke-tests `/api/health` direct and via nginx
+---
 
-When it finishes it prints the dashboard URL and the next-step list.
-**Sign into `http://<host>/admin/llm` and configure your LLM provider before
-running the first analysis.**
+### 💻 Manual Installation (Development / Custom Environments)
 
-### One-shot bootstrap (Red Hat / CentOS / Rocky / AlmaLinux / Fedora)
-
-```bash
-git clone https://github.com/s-ttp/DeepTrace.git
-cd DeepTrace
-./bootstrap-rhel.sh
-```
-*(Running `./bootstrap.sh` also automatically detects Red Hat and delegates to `bootstrap-rhel.sh`).*
-
-What `bootstrap-rhel.sh` does (idempotent, safe to re-run):
-1. Configures package repositories (EPEL, CRB/PowerTools) and installs development tools (`gcc`, `libxml2-devel`, `libpcap-devel`, etc.)
-2. Ensures Python 3.9+ runtime & devel tools, and installs `wireshark-cli` (providing `tshark` and `dumpcap`)
-3. Installs Node.js 18+ (NodeSource 20 LTS if needed) & npm
-4. Grants dumpcap packet-capture capabilities (`cap_net_raw`, `cap_net_admin`)
-5. Creates `backend/venv` and installs Python dependencies
-6. Builds the production React frontend bundle
-7. Prompts for admin credentials and writes `backend/.env` with bcrypt hash
-8. Installs and enables the `deeptrace.service` systemd unit
-9. Installs native Nginx site at `/etc/nginx/conf.d/deeptrace.conf` with self-contained proxy configuration
-10. Automatically configures SELinux booleans (`httpd_can_network_connect`) and file contexts (`httpd_sys_content_t`)
-11. Opens HTTP port 80 in `firewalld`
-12. Configures `crond` for the nightly 23:00 wipe
-13. Starts all services and smoke-tests endpoints
-
-### Manual installation (development)
-
-Prerequisites: Python 3.11+, Node.js 18+, `tshark`.
+Prerequisites: Python 3.9+, Node.js 18+, `tshark`.
 
 ```bash
 # Backend
@@ -242,14 +247,103 @@ cd ../frontend
 npm install
 npm run build
 
-# Run (foreground, dev)
+# Run (foreground development mode)
 cd ..
 ./backend/venv/bin/uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Open `http://localhost:8000/`. The `/admin/llm` page needs `ADMIN_USERNAME`
-and `ADMIN_PASSWORD_HASH` to be set in `backend/.env` before it'll accept
+and `ADMIN_PASSWORD_HASH` to be set in `backend/.env` before it will accept
 auth; without them, the admin endpoints return HTTP 503 by design.
+
+---
+
+## 🔑 Configuring & Updating LLM API Keys
+
+DeepTrace uses an LLM provider to generate root-cause analysis (RCA) narratives, failure classifications, and interactive troubleshooting responses. All deterministic protocol analyzers, SIP/VoLTE trackers, flow diagrams, and KPI charts work out-of-the-box even without an API key.
+
+API keys can be added, updated, or rotated at any time using **any of the three methods below**.
+
+### Method 1: Web Admin Interface (Recommended)
+
+1. Open your browser to:
+   ```text
+   http://<server-ip>/admin/llm
+   ```
+2. Enter the **Admin Username** and **Password** created during the bootstrap setup.
+3. Select your provider:
+   * **Google Gemini** (e.g., `gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-2.0-flash`)
+   * **Anthropic** (e.g., `claude-3-5-sonnet-20241022`, `claude-3-opus-20240229`)
+   * **OpenAI** (e.g., `gpt-4o`, `gpt-4o-mini`)
+   * **Moonshot / Kimi** (e.g., `kimi-k2.5`)
+4. Paste your **API Key** (and optionally custom Base URL if using an enterprise proxy or internal endpoint).
+5. Click **Test Config** to perform a live probe without saving.
+6. Click **Save Configuration**. The new key is hot-reloaded immediately without restarting the backend service!
+
+---
+
+### Method 2: REST API (Curl / Automation)
+
+You can inspect or update the LLM configuration programmatically via HTTP Basic Auth:
+
+```bash
+# 1. Check current active provider and key status (redacted)
+curl -u admin:YOUR_ADMIN_PASSWORD http://127.0.0.1/api/admin/llm/config
+
+# 2. Test an API key before saving
+curl -u admin:YOUR_ADMIN_PASSWORD -X POST http://127.0.0.1/api/admin/llm/test \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "google",
+    "model": "gemini-1.5-pro",
+    "api_key": "YOUR_GEMINI_API_KEY"
+  }'
+
+# 3. Save / Update the LLM configuration
+curl -u admin:YOUR_ADMIN_PASSWORD -X PUT http://127.0.0.1/api/admin/llm/config \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "google",
+    "model": "gemini-1.5-pro",
+    "api_key": "YOUR_GEMINI_API_KEY"
+  }'
+```
+
+---
+
+### Method 3: Direct File Configuration
+
+The persistent source of truth on disk is `backend/config/llm_config.json`:
+
+```json
+{
+  "provider": "google",
+  "model": "gemini-1.5-pro",
+  "api_key": "AIzaSy...",
+  "base_url": "",
+  "updated_at": "2026-10-08T08:30:00Z",
+  "source": "file"
+}
+```
+
+* **File location**: `backend/config/llm_config.json`
+* **File permissions**: Mode `0600` (readable only by the owner).
+* Any edit takes effect on the next request or after `sudo systemctl restart deeptrace`.
+
+---
+
+### 🔄 Rotating or Resetting Admin Password
+
+If you ever need to change or reset the web console credentials for `/admin/llm`:
+
+```bash
+cd backend
+# Generate a new bcrypt hash
+./venv/bin/python scripts/hash_admin_password.py
+# Edit backend/.env and replace ADMIN_PASSWORD_HASH:
+# ADMIN_PASSWORD_HASH='$2b$12$...'
+sudo systemctl restart deeptrace
+```
 
 ---
 
